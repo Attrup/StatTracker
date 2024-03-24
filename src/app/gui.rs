@@ -109,8 +109,9 @@ fn display_game_data(ctx: &egui::Context, data: (&str, u32, Option<([u32; 8], bo
 
             if let Some(stats) = data.2 {
                 ui.label(
-                    egui::RichText::new("Silent Assassin")
+                    egui::RichText::new("SILENT ASSASSIN")
                         .size(25.0)
+                        .monospace()
                         .color(if stats.1 {
                             egui::Color32::from_rgb(0, 160, 0)
                         } else {
@@ -139,11 +140,9 @@ fn display_no_game(ctx: &egui::Context) {
 
             ui.add_space(30.0);
             ui.label(
-                egui::RichText::new("Launch Hitman 2 SA or \nHitman Contracts to proceed")
+                egui::RichText::new("Launch Hitman 2 SA or \nHitman Contracts to show stats")
                     .size(16.0),
             );
-            ui.add_space(20.0);
-            ui.add(egui::widgets::Spinner::new().size(50.0));
         });
     });
 }

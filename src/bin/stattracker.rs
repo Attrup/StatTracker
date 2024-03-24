@@ -17,6 +17,7 @@ fn main() -> eframe::Result<(), eframe::Error> {
             viewport: ViewportBuilder::default()
                 .with_inner_size(Vec2::new(WIDTH, HEIGHT))
                 .with_min_inner_size(Vec2::new(WIDTH, HEIGHT)),
+            renderer: eframe::Renderer::Glow,
             run_and_return: false,
             ..Default::default()
         },
