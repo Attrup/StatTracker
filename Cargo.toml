@@ -1,0 +1,25 @@
+[package]
+name = "stattracker"
+version = "0.1.0"
+edition = "2021"
+
+# Define the information on the main binary
+[[bin]]
+name = "StatTracker"
+version = "0.1.0"
+path = "src/bin/stattracker.rs"
+
+
+[dependencies]
+# General dependencies
+read-process-memory = "0.1.6"
+sysinfo = "0.29.3"
+
+# Egui dependencies
+egui = "0.26.2"
+eframe = { version = "0.26.2", default-features = false, features = [
+    "default_fonts",
+    "glow",
+    "persistence",
+] }
+image = "0.25.0"
