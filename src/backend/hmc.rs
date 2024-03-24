@@ -114,7 +114,7 @@ impl HmC {
 }
 
 impl GameData for HmC {
-    fn update(&self) -> Option<(&str, u32, Option<([u32; 8], bool)>)> {
+    fn update(&mut self) -> Option<(&str, u32, Option<([u32; 8], bool)>)> {
         // Get map bytes and decode
         let map_bytes = match read_memory(BASE_ADDRESS + MAP_ADDRESS, self.pid, 5, MAP.to_vec()) {
             Ok(bytes) => bytes,

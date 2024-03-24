@@ -60,6 +60,7 @@ const SA_COMBINATIONS: [[u32; 8]; 27] = [
 pub struct Hm2 {
     pid: u32,
     map_decoder: HashMap<String, (String, Option<usize>)>,
+    shots_fired_backup: u32,
 }
 
 impl Hm2 {
@@ -149,19 +150,26 @@ impl Hm2 {
                     (String::from("Redemption at Gontranno"), Some(19)),
                 ),
             ]),
+            shots_fired_backup: 0,
         }
     }
 
+    /// Load all the game stats from program memory
     fn load_stats(&self, map_no: usize) -> Option<[u32; 8]> {
         let mut stats = [0; 8];
 
-        // Shots has no map dependent pointer
-        stats[0] = decode_to_u32(read_memory(
+        // Shots fired is independent of the map, but the address tends to
+        // shift around depending on the map and the player location. To
+        // combat this, we use a backup value if the read is unsuccessful.
+        stats[0] = match decode_to_u32(read_memory(
             BASE_ADDRESS + SHOTS_ADDRESS,
             self.pid,
             4,
             SHOTS_FIRED.to_vec(),
-        ))?;
+        )) {
+            Some(shots) => shots,
+            None => self.shots_fired_backup,
+        };
 
         // Remaing stats are dependent on the map
         for (i, stat) in [
@@ -191,7 +199,7 @@ impl Hm2 {
 }
 
 impl GameData for Hm2 {
-    fn update(&self) -> Option<(&str, u32, Option<([u32; 8], bool)>)> {
+    fn update(&mut self) -> Option<(&str, u32, Option<([u32; 8], bool)>)> {
         // Get map bytes and decode
         let map_bytes = match read_memory(BASE_ADDRESS + MAP_ADDRESS, self.pid, 5, MAP.to_vec()) {
             Ok(bytes) => bytes,
@@ -222,6 +230,9 @@ impl GameData for Hm2 {
                     Some(map_no) => {
                         // Get game stats
                         let stats = self.load_stats(map_no)?;
+
+                        // Backup shots fired
+                        self.shots_fired_backup = stats[0];
 
                         // Check for SA rating
                         let mut silent_assasin = false;
