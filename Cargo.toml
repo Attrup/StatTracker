@@ -12,13 +12,12 @@ path = "src/bin/stattracker.rs"
 [dependencies]
 # General dependencies
 read-process-memory = "0.1.6"
-sysinfo = "0.29.3"
+sysinfo = "0.30.12"
 
 # Egui dependencies
-egui = "0.26.2"
-eframe = { version = "0.26.2", default-features = false, features = [
+egui = "0.27.2"
+eframe = { version = "0.27.2", default-features = false, features = [
     "default_fonts",
     "glow",
     "persistence",
 ] }
-image = "0.25.0"

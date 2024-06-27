@@ -1,7 +1,7 @@
 use crate::backend::hm2::Hm2;
 use crate::backend::hmc::HmC;
 use crate::GameData;
-use sysinfo::{PidExt, ProcessExt, System, SystemExt};
+use sysinfo::System;
 
 /// Get the process ID of available games
 pub fn get_game(sys: &mut System) -> Option<Box<dyn GameData>> {

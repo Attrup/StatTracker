@@ -2,7 +2,7 @@ use super::misc::setup_fonts;
 use crate::{system_access::system::*, GameData};
 use egui::*;
 use std::time::Duration;
-use sysinfo::{System, SystemExt};
+use sysinfo::System;
 
 // Set the minimum refresh rate of the app in Hz
 const REFRESH_RATE: usize = 30;
