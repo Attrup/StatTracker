@@ -1,5 +1,5 @@
 /// Add monospace font to existing font families to fonts and set as default for monospace
-pub fn setup_fonts(ctx: &egui::Context) {
+pub fn load_monospace_font(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
 
     fonts.font_data.insert(

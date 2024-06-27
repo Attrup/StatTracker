@@ -1,5 +1,4 @@
-use super::misc::setup_fonts;
-use crate::{system_access::system::*, GameData};
+use crate::{setup::fonts, system_access::system::*, GameData};
 use egui::*;
 use std::time::Duration;
 use sysinfo::System;
@@ -19,7 +18,7 @@ enum State {
 
 impl GUI {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        setup_fonts(&cc.egui_ctx);
+        fonts::load_monospace_font(&cc.egui_ctx);
         Self {
             state: State::Waiting,
             sys: System::new(),

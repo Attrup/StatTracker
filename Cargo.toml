@@ -3,18 +3,21 @@ name = "stattracker"
 version = "0.1.0"
 edition = "2021"
 
-# Define the information on the main binary
+# Define the information on the binaries
 [[bin]]
 name = "StatTracker"
-path = "src/bin/stattracker.rs"
+path = "src/bin/standalone.rs"
 
+[[bin]]
+name = "Overlay"
+path = "src/bin/overlay.rs"
 
 [dependencies]
 # General dependencies
 read-process-memory = "0.1.6"
 sysinfo = "0.30.12"
 
-# Egui dependencies
+# Egui and its dependencies
 egui = "0.27.2"
 eframe = { version = "0.27.2", default-features = false, features = [
     "default_fonts",
