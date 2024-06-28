@@ -1,9 +1,9 @@
 #![windows_subsystem = "windows"] // Removes console when running on Windows
 
-use eframe::egui::{Style, Vec2, ViewportBuilder, Visuals};
+use eframe::egui::{Style, ViewportBuilder, Visuals};
 use stattracker::applications::standalone::app::GUI;
 
-// Set initial window size
+// Define initial window size
 const WIDTH: f32 = 270.0;
 const HEIGHT: f32 = 330.0;
 
@@ -14,8 +14,8 @@ fn main() -> eframe::Result<(), eframe::Error> {
         "Hitman StatTracker",
         eframe::NativeOptions {
             viewport: ViewportBuilder::default()
-                .with_inner_size(Vec2::new(WIDTH, HEIGHT))
-                .with_min_inner_size(Vec2::new(WIDTH, HEIGHT)),
+                .with_inner_size([WIDTH, HEIGHT])
+                .with_min_inner_size([WIDTH, HEIGHT]),
             renderer: eframe::Renderer::Glow,
             run_and_return: false,
             ..Default::default()

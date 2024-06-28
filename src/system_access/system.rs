@@ -20,3 +20,18 @@ pub fn get_game(sys: &mut System) -> Option<Box<dyn GameData>> {
 
     return None;
 }
+
+// Get the on screen position of the active game window
+pub fn get_game_window(args: Vec<String>) -> Option<(f32, f32, f32, f32)> {
+    if args.len() >= 2 {
+        match args[1].parse::<u32>() {
+            Ok(val) => {
+                println!("{:?}", val);
+                return Some((0.0, 0.0, 1920.0, 1080.0))
+            }
+            _ => return None,
+        }
+    }
+
+    None
+}
