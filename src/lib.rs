@@ -24,6 +24,7 @@ pub mod system_access {
 pub mod applications {
     pub mod overlay {
         pub mod app;
+        pub mod input;
     }
 
     pub mod standalone {

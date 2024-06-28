@@ -1,11 +1,18 @@
+use super::input::*;
 use crate::setup::fonts;
 
-pub struct GUI {}
+pub struct GUI {
+    timer: String,
+    size: f32,
+}
 
 impl GUI {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         fonts::load_monospace_font(&cc.egui_ctx);
-        GUI {}
+        GUI {
+            timer: "00:00".to_string(),
+            size: 40.0,
+        }
     }
 }
 
@@ -24,7 +31,22 @@ impl eframe::App for GUI {
 
         // Create the central panel container with a transparent background
         egui::CentralPanel::default().frame(frame).show(&ctx, |ui| {
-            ui.label(egui::RichText::new("03:18").size(40.0).monospace())
+            // Read and execute the next command from stdin
+            match get_next_command() {
+                Ok(Command::Time(minutes, seconds)) => {
+                    self.timer = format!("{}:{}", minutes, seconds);
+                }
+                Ok(Command::Size(size)) => {
+                    self.size = size;
+                }
+                _ => {}
+            }
+
+            ui.label(
+                egui::RichText::new(self.timer.as_str())
+                    .size(self.size)
+                    .monospace(),
+            )
         });
     }
 }
