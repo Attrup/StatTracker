@@ -1,9 +1,26 @@
+use std::sync::{Arc, Mutex};
 use std::{io, str::SplitWhitespace};
 
 pub enum Command {
     Time(String, String),
     Size(f32),
     Skip,
+}
+
+/// Polls for new commands from Stdin and updates shared variables
+/// Allows the blocking call to Stdin to be handled in a separate thread
+pub fn thread_reader(timer: Arc<Mutex<String>>, size: Arc<Mutex<f32>>) {
+    loop {
+        match get_next_command() {
+            Ok(Command::Time(minutes, seconds)) => {
+                *timer.lock().unwrap() = format!("{}:{}", minutes, seconds);
+            }
+            Ok(Command::Size(timer_size)) => {
+                *size.lock().unwrap() = timer_size;
+            }
+            _ => {}
+        }
+    }
 }
 
 /// Read the next line from Stdin and decode it into a Command

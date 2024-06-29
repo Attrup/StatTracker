@@ -1,17 +1,33 @@
+use std::{
+    sync::{Arc, Mutex},
+    thread,
+    time::Duration,
+};
+
 use super::input::*;
 use crate::setup::fonts;
 
+// Set the minimum refresh rate of the app in Hz
+const REFRESH_RATE: usize = 5;
+
 pub struct GUI {
-    timer: String,
-    size: f32,
+    timer: Arc<Mutex<String>>,
+    size: Arc<Mutex<f32>>,
+    _input_thread: thread::JoinHandle<()>,
 }
 
 impl GUI {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         fonts::load_monospace_font(&cc.egui_ctx);
+
+        // Create shared variables for the timer and size
+        let timer = Arc::new(Mutex::new("00:00".to_string()));
+        let size = Arc::new(Mutex::new(40.0));
+
         GUI {
-            timer: "00:00".to_string(),
-            size: 40.0,
+            timer: timer.clone(),
+            size: size.clone(),
+            _input_thread: thread::spawn(move || thread_reader(timer.clone(), size.clone())),
         }
     }
 }
@@ -31,22 +47,15 @@ impl eframe::App for GUI {
 
         // Create the central panel container with a transparent background
         egui::CentralPanel::default().frame(frame).show(&ctx, |ui| {
-            // Read and execute the next command from stdin
-            match get_next_command() {
-                Ok(Command::Time(minutes, seconds)) => {
-                    self.timer = format!("{}:{}", minutes, seconds);
-                }
-                Ok(Command::Size(size)) => {
-                    self.size = size;
-                }
-                _ => {}
-            }
-
+            // Display the timer with the specified size
             ui.label(
-                egui::RichText::new(self.timer.as_str())
-                    .size(self.size)
+                egui::RichText::new(self.timer.lock().unwrap().as_str())
+                    .size(*self.size.lock().unwrap())
                     .monospace(),
             )
         });
+
+        // Force refresh of the app at the defined rate
+        ctx.request_repaint_after(Duration::from_millis((1000 / REFRESH_RATE) as u64))
     }
 }
