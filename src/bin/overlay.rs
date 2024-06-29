@@ -8,7 +8,7 @@ use std::env;
 
 // Define window size
 const WIDTH: f32 = 150.0;
-const HEIGHT: f32 = 50.0;
+const HEIGHT: f32 = 60.0;
 
 fn main() -> eframe::Result<()> {
     // Retrieve PID of target process from command line arguments

@@ -12,6 +12,7 @@ pub mod backends {
 /// Shared functions for app setup
 pub mod setup {
     pub mod fonts;
+    pub mod colors;
 }
 
 /// Memory reading + system calls
