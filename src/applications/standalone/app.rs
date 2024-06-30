@@ -3,6 +3,7 @@ use crate::{
     system_access::system::*,
     GameData,
 };
+
 use egui::*;
 use std::time::Duration;
 use sysinfo::System;
@@ -13,7 +14,9 @@ const REFRESH_RATE: usize = 30;
 pub struct GUI {
     state: State,
     sys: System,
-    color_map: ColorMap,
+    cmap: ColorMap,
+    use_overlay: bool,
+    text_size: u8,
 }
 
 enum State {
@@ -28,7 +31,9 @@ impl GUI {
         Self {
             state: State::Settings,
             sys: System::new(),
-            color_map: ColorMap::gr_cmap(),
+            cmap: ColorMap::gr_cmap(),
+            use_overlay: false,
+            text_size: 6,
         }
     }
 }
@@ -46,14 +51,14 @@ impl eframe::App for GUI {
             }
             State::Game(ref mut game) => {
                 if let Some(game_data) = game.update() {
-                    display_game_data(ctx, game_data, &self.color_map);
+                    display_game_data(ctx, game_data, &self.cmap);
                 } else {
                     self.state = State::Waiting;
                     display_no_game(ctx);
                 }
             }
             State::Settings => {
-                display_settings(&mut self.color_map, ctx);
+                display_settings(self, ctx);
             }
         }
 
@@ -144,19 +149,18 @@ fn display_no_game(ctx: &egui::Context) {
 }
 
 /// Display the settings menu
-fn display_settings(color_map: &mut ColorMap, ctx: &egui::Context) {
+fn display_settings(data: &mut GUI, ctx: &egui::Context) {
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.vertical_centered(|ui| {
             // Heading
             ui.heading(egui::RichText::new("Settings").size(20.0));
             ui.separator();
-            ui.add_space(4.0);
         });
 
         // Create grid for all the settings
         egui::Grid::new("Settings")
             .num_columns(2)
-            .spacing([25.0, 5.0])
+            .spacing([18.0, 5.0])
             .show(ui, |ui| {
                 // Theme Toggle
                 ui.add(egui::Label::new("Theme"));
@@ -166,32 +170,66 @@ fn display_settings(color_map: &mut ColorMap, ctx: &egui::Context) {
                 // Color map selector
                 ui.add(egui::Label::new("Rating Colors"));
                 egui::ComboBox::from_label("")
-                    .selected_text(format!("{}", color_map.get_label()))
+                    .selected_text(format!("{}", data.cmap.get_label()))
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(color_map, ColorMap::gr_cmap(), "Green / Red");
-                        ui.selectable_value(color_map, ColorMap::br_cmap(), "Blue / Red");
-                        ui.selectable_value(color_map, ColorMap::bo_cmap(), "Blue / Orange");
-                        ui.selectable_value(color_map, ColorMap::bb_cmap(), "Blue / Brown");
-                        ui.selectable_value(color_map, ColorMap::mk_cmap(), "Mint / Khaki");
+                        ui.selectable_value(&mut data.cmap, ColorMap::gr_cmap(), "Green / Red");
+                        ui.selectable_value(&mut data.cmap, ColorMap::br_cmap(), "Blue / Red");
+                        ui.selectable_value(&mut data.cmap, ColorMap::bo_cmap(), "Blue / Orange");
+                        ui.selectable_value(&mut data.cmap, ColorMap::bb_cmap(), "Blue / Brown");
+                        ui.selectable_value(&mut data.cmap, ColorMap::mk_cmap(), "Mint / Khaki");
                     });
                 ui.end_row();
+
+                // Use game overlay
+                ui.add(egui::Label::new("Game Overlay"));
+                ui.checkbox(&mut data.use_overlay, "Enable");
+                ui.end_row();
+
+                // Text size of the overlay
+                ui.add(egui::Label::new("Overlay Size [pt]"));
+                ui.add(egui::Slider::new(&mut data.text_size, 1..=10));
             });
 
-        // Draw color map preview
-        ui.separator();
-        ui.spacing();
-        ui.horizontal(|ui| {
-            ui.label(
-                egui::RichText::new("SA Rating")
-                    .size(15.0)
-                    .color(color_map.get_sa_true()),
+        ui.vertical_centered(|ui| {
+            //Color map preview
+            ui.add_space(20.0);
+            let mut rating_text = egui::text::LayoutJob::default();
+
+            rating_text.append(
+                "SA Rating",
+                0.0,
+                TextFormat {
+                    font_id: FontId::proportional(18.0),
+                    color: data.cmap.get_sa_true(),
+                    ..Default::default()
+                },
             );
-            ui.add_space(30.0);
-            ui.label(
-                egui::RichText::new("Other Rating")
-                    .size(15.0)
-                    .color(color_map.get_sa_false()),
+
+            rating_text.append(
+                "Other Rating",
+                25.0,
+                TextFormat {
+                    font_id: FontId::proportional(18.0),
+                    color: data.cmap.get_sa_false(),
+                    ..Default::default()
+                },
             );
+
+            ui.label(rating_text);
+
+            ui.add_space(35.0);
+            ui.hyperlink_to("GitHub", "https://github.com/Attrup/StatTracker/releases");
+            ui.label(format!("Hitman StatTracker v{}", env!("CARGO_PKG_VERSION")));
+            ui.label("By Jonas Attrup");
+
+            // Return to previous state button
+            ui.add_space(25.0);
+            if ui
+                .button(egui::RichText::new("Exit Settings").size(15.0))
+                .clicked()
+            {
+                println!("Exiting Settings");
+            }
         });
     });
 }

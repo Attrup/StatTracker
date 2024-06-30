@@ -13,7 +13,7 @@ impl ColorMap {
     pub fn gr_cmap() -> Self {
         ColorMap {
             label: String::from("Green / Red"),
-            sa_true: Color32::from_rgb(0, 204, 0),
+            sa_true: Color32::from_rgb(0, 160, 0),
             sa_false: Color32::RED,
         }
     }
@@ -49,7 +49,7 @@ impl ColorMap {
     pub fn mk_cmap() -> Self {
         ColorMap {
             label: String::from("Mint / Khaki"),
-            sa_true: Color32::from_rgb(64, 76, 166),
+            sa_true: Color32::from_rgb(64, 176, 166),
             sa_false: Color32::from_rgb(225, 190, 106),
         }
     }
