@@ -1,4 +1,8 @@
-use crate::{setup::fonts, system_access::system::*, GameData};
+use crate::{
+    setup::{colors::ColorMap, fonts},
+    system_access::system::*,
+    GameData,
+};
 use egui::*;
 use std::time::Duration;
 use sysinfo::System;
@@ -9,10 +13,12 @@ const REFRESH_RATE: usize = 30;
 pub struct GUI {
     state: State,
     sys: System,
+    color_map: ColorMap,
 }
 
 enum State {
     Game(Box<dyn GameData>),
+    Settings,
     Waiting,
 }
 
@@ -20,8 +26,9 @@ impl GUI {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         fonts::load_monospace_font(&cc.egui_ctx);
         Self {
-            state: State::Waiting,
+            state: State::Settings,
             sys: System::new(),
+            color_map: ColorMap::gr_cmap(),
         }
     }
 }
@@ -39,11 +46,14 @@ impl eframe::App for GUI {
             }
             State::Game(ref mut game) => {
                 if let Some(game_data) = game.update() {
-                    display_game_data(ctx, game_data);
+                    display_game_data(ctx, game_data, &self.color_map);
                 } else {
                     self.state = State::Waiting;
                     display_no_game(ctx);
                 }
+            }
+            State::Settings => {
+                display_settings(&mut self.color_map, ctx);
             }
         }
 
@@ -53,7 +63,11 @@ impl eframe::App for GUI {
 }
 
 /// Draw GUI for the application when a game is running
-fn display_game_data(ctx: &egui::Context, data: (&str, u32, Option<([u32; 8], bool)>)) {
+fn display_game_data(
+    ctx: &egui::Context,
+    data: (&str, u32, Option<([u32; 8], bool)>),
+    color_map: &ColorMap,
+) {
     egui::CentralPanel::default().show(ctx, |ui| {
         // Mission Title / Game Status
         ui.vertical_centered(|ui| {
@@ -64,27 +78,16 @@ fn display_game_data(ctx: &egui::Context, data: (&str, u32, Option<([u32; 8], bo
             // Mission Time
             ui.add_space(4.0);
 
-            if ui
-                .add(
-                    Button::new(
-                        egui::RichText::new(format!(
-                            "{:0>2}:{:0>2}.{:0>2}",
-                            data.1 / 3600,
-                            (data.1 / 60) % 60,
-                            ((100 / 60) * (data.1 % 60)) as usize,
-                        ))
-                        .size(30.0)
-                        .monospace(),
-                    )
-                    .frame(false),
-                )
-                .clicked()
-            {
-                match ui.visuals().dark_mode {
-                    true => ctx.set_visuals(Visuals::light()),
-                    false => ctx.set_visuals(Visuals::dark()),
-                }
-            };
+            ui.label(
+                egui::RichText::new(format!(
+                    "{:0>2}:{:0>2}.{:0>2}",
+                    data.1 / 3600,
+                    (data.1 / 60) % 60,
+                    ((100 / 60) * (data.1 % 60)) as usize,
+                ))
+                .size(30.0)
+                .monospace(),
+            );
 
             ui.add_space(4.0);
 
@@ -112,9 +115,9 @@ fn display_game_data(ctx: &egui::Context, data: (&str, u32, Option<([u32; 8], bo
                         .size(25.0)
                         .monospace()
                         .color(if stats.1 {
-                            egui::Color32::from_rgb(0, 160, 0)
+                            color_map.get_sa_true()
                         } else {
-                            egui::Color32::RED
+                            color_map.get_sa_false()
                         }),
                 );
             }
@@ -126,21 +129,68 @@ fn display_game_data(ctx: &egui::Context, data: (&str, u32, Option<([u32; 8], bo
 fn display_no_game(ctx: &egui::Context) {
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.vertical_centered(|ui| {
+            // Heading
             ui.add_space(12.0);
-            if ui
-                .add(Button::new(egui::RichText::new("Hitman StatTracker").size(25.0)).frame(false))
-                .clicked()
-            {
-                match ui.visuals().dark_mode {
-                    true => ctx.set_visuals(Visuals::light()),
-                    false => ctx.set_visuals(Visuals::dark()),
-                }
-            };
+            ui.label(egui::RichText::new("Hitman StatTracker").size(25.0));
 
+            // Subheading
             ui.add_space(30.0);
             ui.label(
                 egui::RichText::new("Launch Hitman 2 SA or \nHitman Contracts to show stats")
                     .size(16.0),
+            );
+        });
+    });
+}
+
+/// Display the settings menu
+fn display_settings(color_map: &mut ColorMap, ctx: &egui::Context) {
+    egui::CentralPanel::default().show(ctx, |ui| {
+        ui.vertical_centered(|ui| {
+            // Heading
+            ui.heading(egui::RichText::new("Settings").size(20.0));
+            ui.separator();
+            ui.add_space(4.0);
+        });
+
+        // Create grid for all the settings
+        egui::Grid::new("Settings")
+            .num_columns(2)
+            .spacing([25.0, 5.0])
+            .show(ui, |ui| {
+                // Theme Toggle
+                ui.add(egui::Label::new("Theme"));
+                theme_toggle(ui, ctx);
+                ui.end_row();
+
+                // Color map selector
+                ui.add(egui::Label::new("Rating Colors"));
+                egui::ComboBox::from_label("")
+                    .selected_text(format!("{}", color_map.get_label()))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(color_map, ColorMap::gr_cmap(), "Green / Red");
+                        ui.selectable_value(color_map, ColorMap::br_cmap(), "Blue / Red");
+                        ui.selectable_value(color_map, ColorMap::bo_cmap(), "Blue / Orange");
+                        ui.selectable_value(color_map, ColorMap::bb_cmap(), "Blue / Brown");
+                        ui.selectable_value(color_map, ColorMap::mk_cmap(), "Mint / Khaki");
+                    });
+                ui.end_row();
+            });
+
+        // Draw color map preview
+        ui.separator();
+        ui.spacing();
+        ui.horizontal(|ui| {
+            ui.label(
+                egui::RichText::new("SA Rating")
+                    .size(15.0)
+                    .color(color_map.get_sa_true()),
+            );
+            ui.add_space(30.0);
+            ui.label(
+                egui::RichText::new("Other Rating")
+                    .size(15.0)
+                    .color(color_map.get_sa_false()),
             );
         });
     });
@@ -167,4 +217,29 @@ fn format_stat(ui: &mut Ui, value: u32, name: &str) {
     );
     ui.label(egui::RichText::new(name).size(18.0));
     ui.end_row();
+}
+
+/// Creates two buttons that allow the user to switch between light and dark mode
+fn theme_toggle(ui: &mut Ui, ctx: &egui::Context) {
+    let colors = if !ui.visuals().dark_mode {
+        (Color32::LIGHT_BLUE, Color32::TRANSPARENT)
+    } else {
+        (Color32::TRANSPARENT, Color32::from_rgb(0, 102, 204))
+    };
+
+    ui.horizontal(|ui| {
+        if ui
+            .add(Button::new(egui::RichText::new("Light")).fill(colors.0))
+            .clicked()
+        {
+            ctx.set_visuals(Visuals::light())
+        };
+
+        if ui
+            .add(Button::new(egui::RichText::new("Dark")).fill(colors.1))
+            .clicked()
+        {
+            ctx.set_visuals(Visuals::dark())
+        };
+    });
 }

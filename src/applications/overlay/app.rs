@@ -28,7 +28,7 @@ impl GUI {
         let size = Arc::new(Mutex::new(40.0));
 
         GUI {
-            colormap: ColorMap::standard_cmap(),
+            colormap: ColorMap::gr_cmap(),
             sa_status: sa_status.clone(),
             timer: timer.clone(),
             size: size.clone(),
@@ -61,9 +61,9 @@ impl eframe::App for GUI {
                         .size(*self.size.lock().unwrap())
                         .monospace()
                         .color(if *self.sa_status.lock().unwrap() {
-                            self.colormap.sa_true
+                            self.colormap.get_sa_true()
                         } else {
-                            self.colormap.sa_false
+                            self.colormap.get_sa_false()
                         }),
                 )
             });
