@@ -1,5 +1,4 @@
-use crate::backends::hm2::Hm2;
-use crate::backends::hmc::HmC;
+use crate::backends::{hm2::Hm2, hmc::HmC};
 use crate::GameData;
 use sysinfo::System;
 

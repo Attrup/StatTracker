@@ -1,9 +1,11 @@
 use crate::{
+    applications::overlay,
     setup::{colors::ColorMap, fonts},
     system_access::system::*,
     GameData,
 };
 
+use super::overlay_control::OverlayProcess;
 use egui::*;
 use std::time::Duration;
 use sysinfo::System;
@@ -12,11 +14,16 @@ use sysinfo::System;
 const REFRESH_RATE: usize = 30;
 
 pub struct GUI {
+    // Application data
     state: State,
     sys: System,
     cmap: ColorMap,
+    counter: u32,
+    // Overlay Control
+    overlay_failed: bool,
     use_overlay: bool,
     text_size: u8,
+    overlay: Option<OverlayProcess>,
 }
 
 enum State {
@@ -28,16 +35,21 @@ enum State {
 impl GUI {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         fonts::load_monospace_font(&cc.egui_ctx);
+
         Self {
             state: State::Settings,
             sys: System::new(),
             cmap: ColorMap::gr_cmap(),
+            counter: 0,
+            overlay_failed: false,
             use_overlay: false,
             text_size: 6,
+            overlay: None,
         }
     }
 }
 
+// Create the layout of the GUI for the application
 impl eframe::App for GUI {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // If game is running, update game stored game data, otherwise check if game
@@ -61,9 +73,11 @@ impl eframe::App for GUI {
                 display_settings(self, ctx);
             }
         }
+        self.counter += 1;
+        println!("Repaint: {}", self.counter);
 
         // Force refresh of the app at the defined rate
-        ctx.request_repaint_after(Duration::from_millis((1000 / REFRESH_RATE) as u64))
+        // ctx.request_repaint_after(Duration::from_millis((1000 / REFRESH_RATE) as u64))
     }
 }
 
@@ -160,7 +174,7 @@ fn display_settings(data: &mut GUI, ctx: &egui::Context) {
         // Create grid for all the settings
         egui::Grid::new("Settings")
             .num_columns(2)
-            .spacing([18.0, 5.0])
+            .spacing([25.0, 5.0])
             .show(ui, |ui| {
                 // Theme Toggle
                 ui.add(egui::Label::new("Theme"));
@@ -182,17 +196,23 @@ fn display_settings(data: &mut GUI, ctx: &egui::Context) {
 
                 // Use game overlay
                 ui.add(egui::Label::new("Game Overlay"));
-                ui.checkbox(&mut data.use_overlay, "Enable");
+                overlay_toggle(ui, data);
                 ui.end_row();
 
                 // Text size of the overlay
-                ui.add(egui::Label::new("Overlay Size [pt]"));
+                ui.add(egui::Label::new("Overlay Size"));
                 ui.add(egui::Slider::new(&mut data.text_size, 1..=10));
             });
 
         ui.vertical_centered(|ui| {
             //Color map preview
-            ui.add_space(20.0);
+            if data.overlay_failed {
+                ui.label(egui::RichText::new("Overlay program not found").color(Color32::RED));
+                ui.add_space(3.0);
+            } else {
+                ui.add_space(20.0);
+            }
+
             let mut rating_text = egui::text::LayoutJob::default();
 
             rating_text.append(
@@ -217,6 +237,7 @@ fn display_settings(data: &mut GUI, ctx: &egui::Context) {
 
             ui.label(rating_text);
 
+            // About section
             ui.add_space(35.0);
             ui.hyperlink_to("GitHub", "https://github.com/Attrup/StatTracker/releases");
             ui.label(format!("Hitman StatTracker v{}", env!("CARGO_PKG_VERSION")));
@@ -228,7 +249,7 @@ fn display_settings(data: &mut GUI, ctx: &egui::Context) {
                 .button(egui::RichText::new("Exit Settings").size(15.0))
                 .clicked()
             {
-                println!("Exiting Settings");
+                data.state = State::Waiting;
             }
         });
     });
@@ -280,4 +301,30 @@ fn theme_toggle(ui: &mut Ui, ctx: &egui::Context) {
             ctx.set_visuals(Visuals::dark())
         };
     });
+}
+
+/// Create the overlay checkbox and propagte possible errors to user
+fn overlay_toggle(ui: &mut Ui, data: &mut GUI) {
+    if ui
+        .checkbox(&mut data.use_overlay, "Enable")
+        .interact(egui::Sense::click())
+        .clicked()
+    {
+        if data.use_overlay {
+            match OverlayProcess::new() {
+                Ok(mut process) => {
+                    process.set_timer(0, true);
+                    data.overlay = Some(process);
+                    data.overlay_failed = false;
+                }
+                Err(_) => {
+                    data.use_overlay = false;
+                    data.overlay_failed = true;
+                }
+            }
+        } else {
+            data.overlay = None;
+            data.use_overlay = false;
+        }
+    }
 }
