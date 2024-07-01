@@ -58,9 +58,9 @@ impl OverlayControl {
     }
 
     /// Update the size of the overlay
-    pub fn set_overlay_size(&mut self, size: u8) {
+    pub fn set_overlay_size(&mut self) {
         if let Some(ref mut overlay) = self.overlay {
-            let cmd = format!("size {}\n", size);
+            let cmd = format!("size {}\n", self.text_size * 8);
             overlay.stdin.write_all(cmd.as_bytes()).unwrap_or_default();
         }
     }

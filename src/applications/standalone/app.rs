@@ -15,13 +15,14 @@ const REFRESH_RATE: usize = 30;
 pub struct GUI {
     // Application data
     state: State,
+    game: Option<Box<dyn GameData>>,
     sys: System,
     cmap: ColorMap,
     overlay: OverlayControl,
 }
 
 enum State {
-    Running(Box<dyn GameData>),
+    Running,
     Settings,
     Waiting,
 }
@@ -31,7 +32,8 @@ impl GUI {
         fonts::load_monospace_font(&cc.egui_ctx);
 
         Self {
-            state: State::Settings,
+            state: State::Waiting,
+            game: None,
             sys: System::new(),
             cmap: ColorMap::from_label("GR"),
             overlay: OverlayControl::new(),
@@ -46,21 +48,30 @@ impl eframe::App for GUI {
         // is running and update state accordingly
         match self.state {
             State::Waiting => {
-                display_no_game(ctx);
+                display_no_game(ctx, &mut self.state);
                 if let Some(game) = get_game(&mut self.sys) {
-                    self.state = State::Running(game);
+                    self.game = Some(game);
+                    self.state = State::Running;
                 }
             }
-            State::Running(ref mut game) => {
-                if let Some(game_data) = game.update() {
-                    display_game_data(ctx, game_data, &self.cmap);
-                } else {
+            State::Running => match self.game.as_mut().unwrap().update() {
+                Some(game_data) => {
+                    display_game_data(
+                        ctx,
+                        game_data,
+                        &mut self.state,
+                        &mut self.overlay,
+                        &self.cmap,
+                    );
+                }
+                None => {
                     self.state = State::Waiting;
-                    display_no_game(ctx);
+                    display_no_game(ctx, &mut self.state);
                 }
-            }
+            },
+
             State::Settings => {
-                display_settings(&mut self.cmap, &mut self.overlay, ctx);
+                display_settings(ctx, &mut self.cmap, &mut self.overlay, &mut self.state);
             }
         }
 
@@ -73,6 +84,8 @@ impl eframe::App for GUI {
 fn display_game_data(
     ctx: &egui::Context,
     data: (&str, u32, Option<([u32; 8], bool)>),
+    _app_state: &mut State,
+    overlay_ctrl: &mut OverlayControl,
     cmap: &ColorMap,
 ) {
     egui::CentralPanel::default().show(ctx, |ui| {
@@ -123,13 +136,16 @@ fn display_game_data(
                             cmap.get_sa_false()
                         }),
                 );
+
+                // Update overlay with new data
+                overlay_ctrl.set_overlay_timer(data.1, stats.1)
             }
         });
     });
 }
 
 /// Draw GUI for the application while waiting for a compatible game to launch
-fn display_no_game(ctx: &egui::Context) {
+fn display_no_game(ctx: &egui::Context, app_state: &mut State) {
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.vertical_centered(|ui| {
             // Heading
@@ -142,12 +158,26 @@ fn display_no_game(ctx: &egui::Context) {
                 egui::RichText::new("Launch Hitman 2 SA or \nHitman Contracts to show stats")
                     .size(16.0),
             );
+
+            // Open Settings Button
+            ui.add_space(167.0);
+            if ui
+                .button(egui::RichText::new("Settings").size(15.0))
+                .clicked()
+            {
+                *app_state = State::Settings;
+            }
         });
     });
 }
 
 /// Display the settings menu
-fn display_settings(cmap: &mut ColorMap, overlay_ctrl: &mut OverlayControl, ctx: &egui::Context) {
+fn display_settings(
+    ctx: &egui::Context,
+    cmap: &mut ColorMap,
+    overlay_ctrl: &mut OverlayControl,
+    app_state: &mut State,
+) {
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.vertical_centered(|ui| {
             // Heading
@@ -177,7 +207,13 @@ fn display_settings(cmap: &mut ColorMap, overlay_ctrl: &mut OverlayControl, ctx:
 
                 // Text size of the overlay
                 ui.add(egui::Label::new("Overlay Size"));
+                let size = overlay_ctrl.text_size;
+
                 ui.add(egui::Slider::new(&mut overlay_ctrl.text_size, 1..=10));
+
+                if size != overlay_ctrl.text_size {
+                    overlay_ctrl.set_overlay_size();
+                }
             });
 
         ui.vertical_centered(|ui| {
@@ -225,7 +261,7 @@ fn display_settings(cmap: &mut ColorMap, overlay_ctrl: &mut OverlayControl, ctx:
                 .button(egui::RichText::new("Exit Settings").size(15.0))
                 .clicked()
             {
-                println!("Exiting settings");
+                *app_state = State::Waiting;
             }
         });
     });
