@@ -14,7 +14,7 @@ impl OverlayControl {
             overlay: None,
             overlay_status: Ok(()),
             use_overlay: false,
-            text_size: 0,
+            text_size: 5,
         }
     }
 

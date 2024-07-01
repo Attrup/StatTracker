@@ -28,7 +28,7 @@ impl GUI {
         let size = Arc::new(Mutex::new(40.0));
 
         GUI {
-            colormap: ColorMap::gr_cmap(),
+            colormap: ColorMap::from_label("GR"),
             sa_status: sa_status.clone(),
             timer: timer.clone(),
             size: size.clone(),

@@ -1,17 +1,38 @@
 use egui::Color32;
 
 /// Struct to easily store the ColorMaps for the Silent Assassin status
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub struct ColorMap {
     label: String,
     sa_true: Color32,
     sa_false: Color32,
 }
 
-
 impl ColorMap {
+    /// Get all available colormaps
+    pub fn all_cmaps() -> Vec<Self> {
+        vec![
+            ColorMap::gr_cmap(),
+            ColorMap::br_cmap(),
+            ColorMap::bo_cmap(),
+            ColorMap::bb_cmap(),
+            ColorMap::mk_cmap(),
+        ]
+    }
+
+    /// Get a colormap by its label abbreviation
+    pub fn from_label(label: &str) -> Self {
+        match label {
+            "BR" => ColorMap::br_cmap(),
+            "BO" => ColorMap::bo_cmap(),
+            "BB" => ColorMap::bb_cmap(),
+            "MK" => ColorMap::mk_cmap(),
+            _ => ColorMap::gr_cmap(),
+        }
+    }
+
     /// Standard Green/Red colormap
-    pub fn gr_cmap() -> Self {
+    fn gr_cmap() -> Self {
         ColorMap {
             label: String::from("Green / Red"),
             sa_true: Color32::from_rgb(0, 160, 0),
@@ -20,7 +41,7 @@ impl ColorMap {
     }
 
     /// Alternative Blue/Red colormap
-    pub fn br_cmap() -> Self {
+    fn br_cmap() -> Self {
         ColorMap {
             label: String::from("Blue / Red"),
             sa_true: Color32::from_rgb(0, 90, 180),
@@ -29,7 +50,7 @@ impl ColorMap {
     }
 
     /// Alternative Blue/Orange colormap
-    pub fn bo_cmap() -> Self {
+    fn bo_cmap() -> Self {
         ColorMap {
             label: String::from("Blue / Orange"),
             sa_true: Color32::from_rgb(12, 123, 220),
@@ -38,7 +59,7 @@ impl ColorMap {
     }
 
     /// Alternative Blue/Brown colormap
-    pub fn bb_cmap() -> Self {
+    fn bb_cmap() -> Self {
         ColorMap {
             label: String::from("Blue / Brown"),
             sa_true: Color32::from_rgb(0, 108, 209),
@@ -47,7 +68,7 @@ impl ColorMap {
     }
 
     /// Alternative Mint/Khaki colormap
-    pub fn mk_cmap() -> Self {
+    fn mk_cmap() -> Self {
         ColorMap {
             label: String::from("Mint / Khaki"),
             sa_true: Color32::from_rgb(64, 176, 166),

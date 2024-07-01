@@ -33,7 +33,7 @@ impl GUI {
         Self {
             state: State::Settings,
             sys: System::new(),
-            cmap: ColorMap::gr_cmap(),
+            cmap: ColorMap::from_label("GR"),
             overlay: OverlayControl::new(),
         }
     }
@@ -79,12 +79,10 @@ fn display_game_data(
         // Mission Title / Game Status
         ui.vertical_centered(|ui| {
             ui.heading(egui::RichText::new(data.0).size(20.0));
-
             ui.separator();
 
             // Mission Time
             ui.add_space(4.0);
-
             ui.label(
                 egui::RichText::new(format!(
                     "{:0>2}:{:0>2}.{:0>2}",
@@ -96,9 +94,8 @@ fn display_game_data(
                 .monospace(),
             );
 
-            ui.add_space(4.0);
-
             // Mission Stats
+            ui.add_space(4.0);
             ui.horizontal(|ui| {
                 ui.add_space(20.0);
                 egui::Grid::new("Stats")
@@ -115,7 +112,6 @@ fn display_game_data(
 
             // Mission Rating
             ui.add_space(6.0);
-
             if let Some(stats) = data.2 {
                 ui.label(
                     egui::RichText::new("SILENT ASSASSIN")
@@ -171,15 +167,7 @@ fn display_settings(cmap: &mut ColorMap, overlay_ctrl: &mut OverlayControl, ctx:
 
                 // Color map selector
                 ui.add(egui::Label::new("Rating Colors"));
-                egui::ComboBox::from_label("")
-                    .selected_text(format!("{}", cmap.get_label()))
-                    .show_ui(ui, |ui| {
-                        ui.selectable_value(cmap, ColorMap::gr_cmap(), "Green / Red");
-                        ui.selectable_value(cmap, ColorMap::br_cmap(), "Blue / Red");
-                        ui.selectable_value(cmap, ColorMap::bo_cmap(), "Blue / Orange");
-                        ui.selectable_value(cmap, ColorMap::bb_cmap(), "Blue / Brown");
-                        ui.selectable_value(cmap, ColorMap::mk_cmap(), "Mint / Khaki");
-                    });
+                cmap_selector(ui, cmap);
                 ui.end_row();
 
                 // Use game overlay
@@ -289,6 +277,17 @@ fn theme_toggle(ui: &mut Ui, ctx: &egui::Context) {
             ctx.set_visuals(Visuals::dark())
         };
     });
+}
+
+/// Create color map dropdown menu
+fn cmap_selector(ui: &mut Ui, cmap: &mut ColorMap) {
+    egui::ComboBox::from_label("")
+        .selected_text(format!("{}", cmap.get_label()))
+        .show_ui(ui, |ui| {
+            for map in ColorMap::all_cmaps() {
+                ui.selectable_value(cmap, map.clone(), map.get_label());
+            }
+        });
 }
 
 /// Create the overlay checkbox and propagte possible errors to user
