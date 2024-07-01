@@ -21,7 +21,7 @@ pub struct GUI {
 }
 
 enum State {
-    Game(Box<dyn GameData>),
+    Running(Box<dyn GameData>),
     Settings,
     Waiting,
 }
@@ -48,10 +48,10 @@ impl eframe::App for GUI {
             State::Waiting => {
                 display_no_game(ctx);
                 if let Some(game) = get_game(&mut self.sys) {
-                    self.state = State::Game(game);
+                    self.state = State::Running(game);
                 }
             }
-            State::Game(ref mut game) => {
+            State::Running(ref mut game) => {
                 if let Some(game_data) = game.update() {
                     display_game_data(ctx, game_data, &self.cmap);
                 } else {
@@ -181,7 +181,7 @@ fn display_settings(cmap: &mut ColorMap, overlay_ctrl: &mut OverlayControl, ctx:
             });
 
         ui.vertical_centered(|ui| {
-            //Color map preview
+            // Color map preview
             if let Err(e) = &overlay_ctrl.overlay_status {
                 ui.label(egui::RichText::new(e).color(Color32::RED));
                 ui.add_space(3.0);
