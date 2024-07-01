@@ -31,6 +31,17 @@ impl ColorMap {
         }
     }
 
+    // Convert the color map labels to their abbreviation
+    pub fn to_label(&self) -> String {
+        match self.label.as_str() {
+            "Blue / Red" => String::from("BR"),
+            "Blue / Orange" => String::from("BO"),
+            "Blue / Brown" => String::from("BB"),
+            "Mint / Khaki" => String::from("MK"),
+            _ => String::from("GR"),
+        }
+    }
+
     /// Standard Green/Red colormap
     fn gr_cmap() -> Self {
         ColorMap {

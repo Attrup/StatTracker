@@ -1,5 +1,6 @@
 use std::io::{Error, ErrorKind, Write};
 use std::process::{Child, ChildStdin, Command, Stdio};
+use std::time::{Duration, SystemTime};
 
 pub struct OverlayControl {
     overlay: Option<OverlayProcess>,
@@ -32,20 +33,31 @@ impl OverlayControl {
         }
     }
 
-    // Update the mission timer and SA status of the overlay
+    /// Update the mission timer and SA status of the overlay. Update 10 times per second
+    /// to limit the amount of data sent to the overlay as it is unessecary.
     pub fn set_overlay_timer(&mut self, time: u32, sa_status: bool) {
         if let Some(ref mut overlay) = self.overlay {
-            let cmd = format!(
-                "data {:0>2} {:0>2} {}\n",
-                time / 3600,
-                (time / 60) % 60,
-                sa_status
-            );
-            overlay.stdin.write_all(cmd.as_bytes()).unwrap_or_default();
+            if overlay
+                .last_update
+                .elapsed()
+                .unwrap_or(Duration::from_secs(1))
+                .as_millis()
+                > 200
+            {
+                let cmd = format!(
+                    "data {:0>2} {:0>2} {}\n",
+                    time / 3600,
+                    (time / 60) % 60,
+                    sa_status
+                );
+
+                overlay.stdin.write_all(cmd.as_bytes()).unwrap_or_default();
+                overlay.last_update = SystemTime::now();
+            }
         }
     }
 
-    // Update the size of the overlay
+    /// Update the size of the overlay
     pub fn set_overlay_size(&mut self, size: u8) {
         if let Some(ref mut overlay) = self.overlay {
             let cmd = format!("size {}\n", size);
@@ -53,7 +65,7 @@ impl OverlayControl {
         }
     }
 
-    // Update the color map used by the overlay
+    /// Update the color map used by the overlay
     pub fn set_overlay_colormap(&mut self, cmap: &str) {
         if let Some(ref mut overlay) = self.overlay {
             let cmd = format!("cmap {}\n", cmap);
@@ -66,9 +78,11 @@ impl OverlayControl {
     }
 }
 
+/// Struct to simplify managing the overlay process
 struct OverlayProcess {
     child: Child,
     stdin: ChildStdin,
+    last_update: SystemTime,
 }
 
 impl OverlayProcess {
@@ -85,6 +99,7 @@ impl OverlayProcess {
         Ok(Self {
             child: child,
             stdin: stdin,
+            last_update: SystemTime::now(),
         })
     }
 }
