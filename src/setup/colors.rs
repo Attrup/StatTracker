@@ -8,6 +8,7 @@ pub struct ColorMap {
     sa_false: Color32,
 }
 
+
 impl ColorMap {
     /// Standard Green/Red colormap
     pub fn gr_cmap() -> Self {
