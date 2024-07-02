@@ -1,6 +1,6 @@
 use super::overlay::draw_overlay;
-use super::{colors::ColorMap, fonts, system::*};
-use crate::GameData;
+use super::{colors::ColorMap, fonts, system_access::get_game};
+use crate::{Backend, Window};
 
 use egui::*;
 use std::time::Duration;
@@ -12,7 +12,8 @@ const REFRESH_RATE: usize = 30;
 pub struct GUI {
     // Application data
     state: State,
-    game: Option<Box<dyn GameData>>,
+    game: Option<Box<dyn Backend>>,
+    game_window: Option<Window>,
     sys: System,
     cmap: ColorMap,
     show_overlay: bool,
@@ -32,9 +33,10 @@ impl GUI {
         Self {
             state: State::Waiting,
             game: None,
+            game_window: None,
             sys: System::new(),
             cmap: ColorMap::default(),
-            show_overlay: false,
+            show_overlay: true,
             overlay_size: 5,
         }
     }
@@ -54,15 +56,30 @@ impl eframe::App for GUI {
                     self.state = State::Running;
                 }
             }
-            State::Running => match self.game.as_mut().unwrap().update() {
-                Some(game_data) => {
-                    display_game_data(ctx, game_data, &mut self.state, &self.cmap);
+            State::Running => {
+                match self.game.as_mut().unwrap().update() {
+                    Some(game_data) => {
+                        display_game_data(
+                            ctx,
+                            game_data,
+                            &self.show_overlay,
+                            &self.overlay_size,
+                            &self.game_window,
+                            &mut self.state,
+                            &self.cmap,
+                        );
+                    }
+                    None => {
+                        self.state = State::Waiting;
+                        self.game_window = None;
+                        display_no_game(ctx, &mut self.state);
+                    }
                 }
-                None => {
-                    self.state = State::Waiting;
-                    display_no_game(ctx, &mut self.state);
+
+                if self.game_window.is_none() {
+                    self.game_window = self.game.as_ref().unwrap().game_window();
                 }
-            },
+            }
 
             State::Settings => {
                 display_settings(
@@ -72,12 +89,19 @@ impl eframe::App for GUI {
                     &mut self.overlay_size,
                     &mut self.state,
                 );
-            }
-        }
 
-        // Draw the overlay if enabled
-        if self.show_overlay {
-            draw_overlay(ctx, &mut self.cmap, &self.overlay_size, &0, &true);
+                // Draw the overlay if enabled
+                if self.show_overlay {
+                    draw_overlay(
+                        ctx,
+                        &self.cmap,
+                        &self.game_window,
+                        &self.overlay_size,
+                        &0,
+                        &true,
+                    );
+                }
+            }
         }
 
         // Force refresh of the app at the defined rate
@@ -89,6 +113,9 @@ impl eframe::App for GUI {
 fn display_game_data(
     ctx: &egui::Context,
     data: (&str, u32, Option<([u32; 8], bool)>),
+    show_overlay: &bool,
+    overlay_size: &u8,
+    game_window: &Option<Window>,
     _app_state: &mut State,
     cmap: &ColorMap,
 ) {
@@ -136,6 +163,16 @@ fn display_game_data(
                         .monospace()
                         .color(cmap.get_rating_color(stats.1)),
                 );
+
+                // Draw the overlay if enabled
+                if *show_overlay {
+                    draw_overlay(ctx, cmap, game_window, overlay_size, &data.1, &stats.1);
+                }
+            } else {
+                // Draw the overlay if enabled
+                if *show_overlay {
+                    draw_overlay(ctx, cmap, game_window, overlay_size, &data.1, &true);
+                }
             }
         });
     });
@@ -211,6 +248,7 @@ fn display_settings(
 
         ui.vertical_centered(|ui| {
             // Color map preview
+            ui.add_space(20.0);
             let mut rating_text = egui::text::LayoutJob::default();
 
             rating_text.append(

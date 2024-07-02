@@ -1,5 +1,5 @@
-use crate::app::memory::*;
-use crate::GameData;
+use crate::app::{memory::*, system_access::get_process_window};
+use crate::{Backend, Window};
 use std::collections::HashMap;
 
 /// Memory addresses
@@ -113,7 +113,7 @@ impl HmC {
     }
 }
 
-impl GameData for HmC {
+impl Backend for HmC {
     fn update(&mut self) -> Option<(&str, u32, Option<([u32; 8], bool)>)> {
         // Get map bytes and decode
         let map_bytes = match read_memory(BASE_ADDRESS + MAP_ADDRESS, self.pid, 5, MAP.to_vec()) {
@@ -163,5 +163,9 @@ impl GameData for HmC {
             }
         }
         return Some((map_name, 0, None));
+    }
+
+    fn game_window(&self) -> Option<Window> {
+        get_process_window("Hitman Contracts")
     }
 }

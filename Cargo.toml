@@ -1,7 +1,9 @@
 [package]
 name = "stattracker"
 version = "0.1.1"
+rust-version = "1.76"
 edition = "2021"
+
 
 # Define the information on the binaries
 [[bin]]
@@ -12,6 +14,12 @@ path = "src/bin/stattracker.rs"
 # General dependencies
 read-process-memory = "0.1.6"
 sysinfo = "0.30.12"
+windows-sys = { version = "0.52.0", features = [
+    "Win32",
+    "Win32_Foundation",
+    "Win32_UI",
+    "Win32_UI_WindowsAndMessaging",
+] }
 
 # Egui and its dependencies
 egui = { version = "0.27.2", features = ["persistence"] }

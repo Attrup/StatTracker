@@ -1,5 +1,5 @@
-use crate::app::memory::*;
-use crate::GameData;
+use crate::app::{memory::*, system_access::get_process_window};
+use crate::{Backend, Window};
 use std::collections::HashMap;
 
 /// Memory addresses
@@ -198,7 +198,7 @@ impl Hm2 {
     }
 }
 
-impl GameData for Hm2 {
+impl Backend for Hm2 {
     fn update(&mut self) -> Option<(&str, u32, Option<([u32; 8], bool)>)> {
         // Get map bytes and decode
         let map_bytes = match read_memory(BASE_ADDRESS + MAP_ADDRESS, self.pid, 5, MAP.to_vec()) {
@@ -209,7 +209,7 @@ impl GameData for Hm2 {
         let (map_name, ratings, enable_timer) =
             match self.map_decoder.get(&decode_to_string(map_bytes)?) {
                 Some((map, ratings)) => (map.as_str(), ratings, true),
-                None => ("Hitman 2", &None, false),
+                None => ("Hitman 2 SA", &None, false),
             };
 
         if enable_timer {
@@ -257,5 +257,9 @@ impl GameData for Hm2 {
             }
         }
         return Some((map_name, 0, None));
+    }
+
+    fn game_window(&self) -> Option<Window> {
+        get_process_window("Hitman2")
     }
 }

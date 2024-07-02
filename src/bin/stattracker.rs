@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"] // Removes console when running on Windows
+// #![windows_subsystem = "windows"] // Removes console when running on Windows
 
 use eframe::egui::ViewportBuilder;
 use stattracker::app::main::GUI;
