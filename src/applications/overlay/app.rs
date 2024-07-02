@@ -1,40 +1,27 @@
-use std::{
-    sync::{Arc, Mutex},
-    thread,
-    time::Duration,
-};
+use std::time::Duration;
 
 use super::input::*;
 use crate::setup::{colors::ColorMap, fonts};
 
 // Set the minimum refresh rate of the app in Hz
-const REFRESH_RATE: usize = 5;
+const REFRESH_RATE: usize = 30;
 
 pub struct GUI {
     colormap: ColorMap,
-    sa_status: Arc<Mutex<bool>>,
-    timer: Arc<Mutex<String>>,
-    size: Arc<Mutex<f32>>,
-    _input_thread: thread::JoinHandle<()>,
+    sa_status: bool,
+    timer: String,
+    size: f32,
 }
 
 impl GUI {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         fonts::load_monospace_font(&cc.egui_ctx);
 
-        // Create shared variables for the timer and size
-        let timer = Arc::new(Mutex::new(String::new()));
-        let sa_status = Arc::new(Mutex::new(true));
-        let size = Arc::new(Mutex::new(40.0));
-
         GUI {
             colormap: ColorMap::from_label("GR"),
-            sa_status: sa_status.clone(),
-            timer: timer.clone(),
-            size: size.clone(),
-            _input_thread: thread::spawn(move || {
-                thread_reader(timer.clone(), size.clone(), sa_status.clone())
-            }),
+            sa_status: true,
+            timer: String::new(),
+            size: 40.0,
         }
     }
 }
@@ -52,15 +39,30 @@ impl eframe::App for GUI {
             ..Default::default()
         };
 
+        // Read next command from Stdin
+        match get_next_command() {
+            Ok(Command::Time(minutes, seconds, sa)) => {
+                self.timer = format!("{}:{}", minutes, seconds);
+                self.sa_status = sa;
+            }
+            Ok(Command::Size(timer_size)) => {
+                self.size = timer_size;
+            }
+            Ok(Command::Color(color)) => {
+                self.colormap = ColorMap::from_label(&color);
+            }
+            _ => {}
+        }
+
         // Create the central panel container with a transparent background
         egui::CentralPanel::default().frame(frame).show(&ctx, |ui| {
             // Display the mission time in the center of the window
             ui.vertical_centered(|ui| {
                 ui.label(
-                    egui::RichText::new(self.timer.lock().unwrap().as_str())
-                        .size(*self.size.lock().unwrap())
+                    egui::RichText::new(self.timer.as_str())
+                        .size(self.size)
                         .monospace()
-                        .color(if *self.sa_status.lock().unwrap() {
+                        .color(if self.sa_status {
                             self.colormap.get_sa_true()
                         } else {
                             self.colormap.get_sa_false()

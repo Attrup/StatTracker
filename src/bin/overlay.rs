@@ -7,8 +7,8 @@ use stattracker::system_access::system::get_game_window;
 use std::env;
 
 // Define window size
-const WIDTH: f32 = 150.0;
-const HEIGHT: f32 = 60.0;
+const WIDTH: f32 = 200.0;
+const HEIGHT: f32 = 80.0;
 
 fn main() -> eframe::Result<()> {
     // Retrieve PID of target process from command line arguments
@@ -27,6 +27,7 @@ fn main() -> eframe::Result<()> {
     let native_options = eframe::NativeOptions {
         viewport: ViewportBuilder::default()
             .with_inner_size([WIDTH, HEIGHT])
+            .with_min_inner_size([WIDTH, HEIGHT])
             .with_resizable(false)
             .with_transparent(true)
             .with_always_on_top()

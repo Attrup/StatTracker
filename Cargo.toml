@@ -5,11 +5,11 @@ edition = "2021"
 
 # Define the information on the binaries
 [[bin]]
-name = "StatTracker"
+name = "stattracker"
 path = "src/bin/standalone.rs"
 
 [[bin]]
-name = "Overlay"
+name = "overlay"
 path = "src/bin/overlay.rs"
 
 [dependencies]

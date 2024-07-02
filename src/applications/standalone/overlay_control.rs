@@ -2,6 +2,8 @@ use std::io::{Error, ErrorKind, Write};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::time::{Duration, SystemTime};
 
+use crate::setup::colors::ColorMap;
+
 pub struct OverlayControl {
     overlay: Option<OverlayProcess>,
     pub overlay_status: Result<(), String>,
@@ -20,11 +22,13 @@ impl OverlayControl {
     }
 
     /// Launch the overlay program. Set the failed flag if the binary is not found.
-    pub fn launch_overlay(&mut self) {
+    pub fn launch_overlay(&mut self, cmap: &ColorMap) {
         match OverlayProcess::new() {
             Ok(process) => {
                 self.overlay = Some(process);
                 self.overlay_status = Ok(());
+                self.set_overlay_size();
+                self.set_overlay_colormap(cmap)
             }
             Err(_) => {
                 self.use_overlay = false;
@@ -66,9 +70,9 @@ impl OverlayControl {
     }
 
     /// Update the color map used by the overlay
-    pub fn set_overlay_colormap(&mut self, cmap: &str) {
+    pub fn set_overlay_colormap(&mut self, cmap: &ColorMap) {
         if let Some(ref mut overlay) = self.overlay {
-            let cmd = format!("cmap {}\n", cmap);
+            let cmd = format!("cmap {}\n", cmap.to_label());
             overlay.stdin.write_all(cmd.as_bytes()).unwrap_or_default();
         }
     }
@@ -88,7 +92,7 @@ struct OverlayProcess {
 impl OverlayProcess {
     // Launch the overlay process and take control of its stdin
     pub fn new() -> Result<Self, Error> {
-        let mut child = Command::new("./target/release/Overlay")
+        let mut child = Command::new("./target/release/Overlay.exe")
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
             .stderr(Stdio::null())

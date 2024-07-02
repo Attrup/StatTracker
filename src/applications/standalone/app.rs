@@ -19,6 +19,7 @@ pub struct GUI {
     sys: System,
     cmap: ColorMap,
     overlay: OverlayControl,
+    counter: u32,
 }
 
 enum State {
@@ -37,6 +38,7 @@ impl GUI {
             sys: System::new(),
             cmap: ColorMap::from_label("GR"),
             overlay: OverlayControl::new(),
+            counter: 0,
         }
     }
 }
@@ -74,6 +76,10 @@ impl eframe::App for GUI {
                 display_settings(ctx, &mut self.cmap, &mut self.overlay, &mut self.state);
             }
         }
+
+        self.counter += 1;
+
+        self.overlay.set_overlay_timer(self.counter, true);
 
         // Force refresh of the app at the defined rate
         ctx.request_repaint_after(Duration::from_millis((1000 / REFRESH_RATE) as u64))
@@ -197,21 +203,28 @@ fn display_settings(
 
                 // Color map selector
                 ui.add(egui::Label::new("Rating Colors"));
+
+                let cmap_before = cmap.clone();
                 cmap_selector(ui, cmap);
+
+                if cmap_before != *cmap {
+                    overlay_ctrl.set_overlay_colormap(&cmap);
+                }
+
                 ui.end_row();
 
                 // Use game overlay
                 ui.add(egui::Label::new("Game Overlay"));
-                overlay_toggle(ui, overlay_ctrl);
+                overlay_toggle(ui, overlay_ctrl, cmap);
                 ui.end_row();
 
                 // Text size of the overlay
                 ui.add(egui::Label::new("Overlay Size"));
-                let size = overlay_ctrl.text_size;
+                let size_before = overlay_ctrl.text_size;
 
                 ui.add(egui::Slider::new(&mut overlay_ctrl.text_size, 1..=10));
 
-                if size != overlay_ctrl.text_size {
+                if size_before != overlay_ctrl.text_size {
                     overlay_ctrl.set_overlay_size();
                 }
             });
@@ -327,14 +340,14 @@ fn cmap_selector(ui: &mut Ui, cmap: &mut ColorMap) {
 }
 
 /// Create the overlay checkbox and propagte possible errors to user
-fn overlay_toggle(ui: &mut Ui, overlay_ctrl: &mut OverlayControl) {
+fn overlay_toggle(ui: &mut Ui, overlay_ctrl: &mut OverlayControl, cmap: &ColorMap) {
     if ui
         .checkbox(&mut overlay_ctrl.use_overlay, "Enable")
         .interact(egui::Sense::click())
         .clicked()
     {
         if overlay_ctrl.use_overlay {
-            overlay_ctrl.launch_overlay();
+            overlay_ctrl.launch_overlay(cmap);
         } else {
             overlay_ctrl.close_overlay();
         }
