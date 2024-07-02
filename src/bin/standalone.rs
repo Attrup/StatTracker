@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"] // Removes console when running on Windows
 
-use eframe::egui::{Style, ViewportBuilder, Visuals};
+use eframe::egui::ViewportBuilder;
 use stattracker::applications::standalone::app::GUI;
 
 // Define initial window size
@@ -16,18 +16,10 @@ fn main() -> eframe::Result<(), eframe::Error> {
             viewport: ViewportBuilder::default()
                 .with_inner_size([WIDTH, HEIGHT])
                 .with_min_inner_size([WIDTH, HEIGHT]),
-            renderer: eframe::Renderer::Glow,
             run_and_return: false,
             ..Default::default()
         },
         // Initialize the GUI
-        Box::new(|cc| {
-            let style = Style {
-                visuals: Visuals::light(),
-                ..Style::default()
-            };
-            cc.egui_ctx.set_style(style);
-            Box::new(GUI::new(cc))
-        }),
+        Box::new(|cc| Box::new(GUI::new(cc))),
     )
 }

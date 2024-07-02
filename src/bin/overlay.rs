@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"] // Removes console when running on Windows
 
-use eframe::egui::{Style, ViewportBuilder, Visuals};
+use eframe::egui::ViewportBuilder;
 use egui::Pos2;
 use stattracker::applications::overlay::app::GUI;
 use stattracker::system_access::system::get_game_window;
@@ -20,10 +20,9 @@ fn main() -> eframe::Result<()> {
             y: top,
         },
         // Default to top left corner of the screen
-        None => Pos2 { x: 0.0, y: 0.0 },
+        None => Pos2 { x: 500.0, y: 0.0 },
     };
 
-    // Define app settings
     let native_options = eframe::NativeOptions {
         viewport: ViewportBuilder::default()
             .with_inner_size([WIDTH, HEIGHT])
@@ -31,9 +30,9 @@ fn main() -> eframe::Result<()> {
             .with_resizable(false)
             .with_transparent(true)
             .with_always_on_top()
-            .with_position(window_pos)
+            // .with_mouse_passthrough(true) Currently broken in winit, waiting on fix
             .with_decorations(true)
-            .with_mouse_passthrough(false),
+            .with_position(window_pos),
         run_and_return: false,
         ..Default::default()
     };
@@ -42,13 +41,6 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "Hitman StatTracker (Overlay)",
         native_options,
-        Box::new(|cc| {
-            let style = Style {
-                visuals: Visuals::light(),
-                ..Style::default()
-            };
-            cc.egui_ctx.set_style(style);
-            Box::new(GUI::new(cc))
-        }),
+        Box::new(|cc| Box::new(GUI::new(cc))),
     )
 }

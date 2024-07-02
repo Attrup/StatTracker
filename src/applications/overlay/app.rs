@@ -59,7 +59,7 @@ impl eframe::App for GUI {
             // Display the mission time in the center of the window
             ui.vertical_centered(|ui| {
                 ui.label(
-                    egui::RichText::new(self.timer.as_str())
+                    egui::RichText::new(&self.timer)
                         .size(self.size)
                         .monospace()
                         .color(if self.sa_status {
