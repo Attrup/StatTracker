@@ -1,10 +1,7 @@
-use crate::{
-    setup::{colors::ColorMap, fonts},
-    system_access::system::*,
-    GameData,
-};
+use super::overlay::draw_overlay;
+use super::{colors::ColorMap, fonts, system::*};
+use crate::GameData;
 
-use super::overlay_control::OverlayControl;
 use egui::*;
 use std::time::Duration;
 use sysinfo::System;
@@ -18,8 +15,8 @@ pub struct GUI {
     game: Option<Box<dyn GameData>>,
     sys: System,
     cmap: ColorMap,
-    overlay: OverlayControl,
-    counter: u32,
+    show_overlay: bool,
+    overlay_size: u8,
 }
 
 enum State {
@@ -36,15 +33,16 @@ impl GUI {
             state: State::Waiting,
             game: None,
             sys: System::new(),
-            cmap: ColorMap::from_label("GR"),
-            overlay: OverlayControl::new(),
-            counter: 0,
+            cmap: ColorMap::default(),
+            show_overlay: false,
+            overlay_size: 5,
         }
     }
 }
 
 // Create the layout of the GUI for the application
 impl eframe::App for GUI {
+    /// Redraw the GUI
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // If game is running, update game stored game data, otherwise check if game
         // is running and update state accordingly
@@ -58,13 +56,7 @@ impl eframe::App for GUI {
             }
             State::Running => match self.game.as_mut().unwrap().update() {
                 Some(game_data) => {
-                    display_game_data(
-                        ctx,
-                        game_data,
-                        &mut self.state,
-                        &mut self.overlay,
-                        &self.cmap,
-                    );
+                    display_game_data(ctx, game_data, &mut self.state, &self.cmap);
                 }
                 None => {
                     self.state = State::Waiting;
@@ -73,13 +65,20 @@ impl eframe::App for GUI {
             },
 
             State::Settings => {
-                display_settings(ctx, &mut self.cmap, &mut self.overlay, &mut self.state);
+                display_settings(
+                    ctx,
+                    &mut self.cmap,
+                    &mut self.show_overlay,
+                    &mut self.overlay_size,
+                    &mut self.state,
+                );
             }
         }
 
-        self.counter += 1;
-
-        self.overlay.set_overlay_timer(self.counter, true);
+        // Draw the overlay if enabled
+        if self.show_overlay {
+            draw_overlay(ctx, &mut self.cmap, &self.overlay_size, &0, &true);
+        }
 
         // Force refresh of the app at the defined rate
         ctx.request_repaint_after(Duration::from_millis((1000 / REFRESH_RATE) as u64))
@@ -91,7 +90,6 @@ fn display_game_data(
     ctx: &egui::Context,
     data: (&str, u32, Option<([u32; 8], bool)>),
     _app_state: &mut State,
-    overlay_ctrl: &mut OverlayControl,
     cmap: &ColorMap,
 ) {
     egui::CentralPanel::default().show(ctx, |ui| {
@@ -136,15 +134,8 @@ fn display_game_data(
                     egui::RichText::new("SILENT ASSASSIN")
                         .size(25.0)
                         .monospace()
-                        .color(if stats.1 {
-                            cmap.get_sa_true()
-                        } else {
-                            cmap.get_sa_false()
-                        }),
+                        .color(cmap.get_rating_color(stats.1)),
                 );
-
-                // Update overlay with new data
-                overlay_ctrl.set_overlay_timer(data.1, stats.1)
             }
         });
     });
@@ -181,7 +172,8 @@ fn display_no_game(ctx: &egui::Context, app_state: &mut State) {
 fn display_settings(
     ctx: &egui::Context,
     cmap: &mut ColorMap,
-    overlay_ctrl: &mut OverlayControl,
+    show_overlay: &mut bool,
+    overlay_size: &mut u8,
     app_state: &mut State,
 ) {
     egui::CentralPanel::default().show(ctx, |ui| {
@@ -203,41 +195,22 @@ fn display_settings(
 
                 // Color map selector
                 ui.add(egui::Label::new("Rating Colors"));
-
-                let cmap_before = cmap.clone();
                 cmap_selector(ui, cmap);
-
-                if cmap_before != *cmap {
-                    overlay_ctrl.set_overlay_colormap(&cmap);
-                }
-
                 ui.end_row();
 
                 // Use game overlay
                 ui.add(egui::Label::new("Game Overlay"));
-                overlay_toggle(ui, overlay_ctrl, cmap);
+                ui.checkbox(show_overlay, "Enable");
                 ui.end_row();
 
                 // Text size of the overlay
                 ui.add(egui::Label::new("Overlay Size"));
-                let size_before = overlay_ctrl.text_size;
 
-                ui.add(egui::Slider::new(&mut overlay_ctrl.text_size, 1..=10));
-
-                if size_before != overlay_ctrl.text_size {
-                    overlay_ctrl.set_overlay_size();
-                }
+                ui.add(egui::Slider::new(overlay_size, 1..=10));
             });
 
         ui.vertical_centered(|ui| {
             // Color map preview
-            if let Err(e) = &overlay_ctrl.overlay_status {
-                ui.label(egui::RichText::new(e).color(Color32::RED));
-                ui.add_space(3.0);
-            } else {
-                ui.add_space(20.0);
-            }
-
             let mut rating_text = egui::text::LayoutJob::default();
 
             rating_text.append(
@@ -337,19 +310,4 @@ fn cmap_selector(ui: &mut Ui, cmap: &mut ColorMap) {
                 ui.selectable_value(cmap, map.clone(), map.get_label());
             }
         });
-}
-
-/// Create the overlay checkbox and propagte possible errors to user
-fn overlay_toggle(ui: &mut Ui, overlay_ctrl: &mut OverlayControl, cmap: &ColorMap) {
-    if ui
-        .checkbox(&mut overlay_ctrl.use_overlay, "Enable")
-        .interact(egui::Sense::click())
-        .clicked()
-    {
-        if overlay_ctrl.use_overlay {
-            overlay_ctrl.launch_overlay(cmap);
-        } else {
-            overlay_ctrl.close_overlay();
-        }
-    }
 }

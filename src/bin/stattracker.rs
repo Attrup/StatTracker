@@ -1,7 +1,7 @@
 #![windows_subsystem = "windows"] // Removes console when running on Windows
 
 use eframe::egui::ViewportBuilder;
-use stattracker::applications::standalone::app::GUI;
+use stattracker::app::main::GUI;
 
 // Define initial window size
 const WIDTH: f32 = 270.0;

@@ -4,7 +4,7 @@ pub fn load_monospace_font(ctx: &egui::Context) {
 
     fonts.font_data.insert(
         "Monofonto".to_owned(),
-        egui::FontData::from_static(include_bytes!("../../data/monofonto rg.otf")),
+        egui::FontData::from_static(include_bytes!("../../assets/monofonto rg.otf")),
     );
 
     fonts

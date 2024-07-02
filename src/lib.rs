@@ -3,33 +3,23 @@ pub trait GameData {
     fn update(&mut self) -> Option<(&str, u32, Option<([u32; 8], bool)>)>;
 }
 
-/// Shared functions for app setup
-pub mod setup {
+/// Application
+pub mod app {
+    // App Components
+    pub mod main;
+    pub mod overlay; 
+
+    // App Setup
     pub mod colors;
     pub mod fonts;
-}
 
-/// Backends for each supported game
-pub mod backends {
-    pub mod hm2;
-    pub mod hmc;
-}
-
-/// Memory reading + system calls
-pub mod system_access {
+    // System Access {Memory reading + system calls)
     pub mod memory;
     pub mod system;
-}
 
-/// Applications
-pub mod applications {
-    pub mod overlay {
-        pub mod app;
-        pub mod input;
-    }
-
-    pub mod standalone {
-        pub mod app;
-        pub mod overlay_control;
+    /// Backends for each supported game
+    pub mod backends {
+        pub mod hm2;
+        pub mod hmc;
     }
 }

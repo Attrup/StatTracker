@@ -20,28 +20,6 @@ impl ColorMap {
         ]
     }
 
-    /// Get a colormap by its label abbreviation
-    pub fn from_label(label: &str) -> Self {
-        match label {
-            "BR" => ColorMap::br_cmap(),
-            "BO" => ColorMap::bo_cmap(),
-            "BB" => ColorMap::bb_cmap(),
-            "MK" => ColorMap::mk_cmap(),
-            _ => ColorMap::gr_cmap(),
-        }
-    }
-
-    // Convert the color map labels to their abbreviation
-    pub fn to_label(&self) -> String {
-        match self.label.as_str() {
-            "Blue / Red" => String::from("BR"),
-            "Blue / Orange" => String::from("BO"),
-            "Blue / Brown" => String::from("BB"),
-            "Mint / Khaki" => String::from("MK"),
-            _ => String::from("GR"),
-        }
-    }
-
     /// Standard Green/Red colormap
     fn gr_cmap() -> Self {
         ColorMap {
@@ -88,6 +66,18 @@ impl ColorMap {
     }
 
     // Getters
+    pub fn get_rating_color(&self, sa_status: bool) -> Color32 {
+        if sa_status {
+            self.sa_true
+        } else {
+            self.sa_false
+        }
+    }
+
+    pub fn default() -> Self {
+        ColorMap::gr_cmap()
+    }
+
     pub fn get_label(&self) -> String {
         self.label.clone()
     }

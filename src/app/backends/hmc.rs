@@ -1,4 +1,4 @@
-use crate::system_access::memory::*;
+use crate::app::memory::*;
 use crate::GameData;
 use std::collections::HashMap;
 
