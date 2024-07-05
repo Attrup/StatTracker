@@ -26,7 +26,7 @@ pub fn get_game(sys: &mut System) -> Option<Box<dyn Backend>> {
     None
 }
 
-// Get the on screen position of the active game window
+/// Get the on screen position of the active game window
 pub fn get_process_window(name: &str) -> Option<Window> {
     let mut rect = RECT {
         left: 0,

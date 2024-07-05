@@ -7,7 +7,7 @@ use std::time::Duration;
 use sysinfo::System;
 
 // Set the minimum refresh rate of the app in Hz
-// Note: It will increase if the cursor is moved around while the window is in focus
+// Note: Refresh rate will increase if the cursor is moved around while the window is in focus
 const REFRESH_RATE: usize = 30;
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -310,7 +310,7 @@ fn display_settings(
 
             // About section
             ui.add_space(35.0);
-            ui.hyperlink_to("GitHub", "https://github.com/Attrup/StatTracker/releases");
+            ui.hyperlink_to("GitHub", "https://github.com/Attrup/StatTracker");
             ui.label(format!("Hitman StatTracker v{}", env!("CARGO_PKG_VERSION")));
             ui.label("By Jonas Attrup");
 
