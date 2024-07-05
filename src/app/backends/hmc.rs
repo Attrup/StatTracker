@@ -1,5 +1,5 @@
 use crate::app::{memory::*, system_access::get_process_window};
-use crate::{Backend, Window};
+use crate::{Backend, GameData, MissionStats, Window};
 use std::collections::HashMap;
 
 /// Memory addresses
@@ -22,24 +22,24 @@ const INNOCENTS_KILLED: [usize; 1] = [0xB27];
 const INNOCENTS_HARMED: [usize; 1] = [0xB23];
 
 /// Valid silent assassin combinations
-const SA_COMBINATIONS: [[u32; 8]; 17] = [
-    [999, 0, 999, 1, 0, 0, 0, 0],
-    [2, 1, 1, 0, 0, 0, 0, 0],
-    [2, 1, 0, 0, 0, 1, 0, 0],
-    [2, 0, 1, 1, 0, 1, 0, 0],
-    [2, 0, 0, 0, 0, 2, 0, 0],
-    [1, 1, 1, 0, 0, 2, 0, 0],
-    [1, 1, 0, 0, 1, 0, 0, 0],
-    [1, 1, 0, 0, 0, 3, 0, 0],
-    [1, 0, 1, 1, 1, 0, 0, 0],
-    [1, 0, 1, 1, 0, 3, 0, 0],
-    [1, 0, 0, 1, 1, 1, 0, 0],
-    [1, 0, 0, 1, 0, 4, 0, 0],
-    [0, 1, 0, 0, 1, 2, 0, 0],
-    [0, 1, 0, 0, 0, 5, 0, 0],
-    [0, 0, 0, 1, 1, 3, 0, 0],
-    [0, 0, 0, 1, 2, 0, 0, 0],
-    [0, 0, 0, 1, 0, 6, 0, 0],
+const SA_COMBINATIONS: [MissionStats; 17] = [
+    MissionStats::new(999, 0, 999, 1, 0, 0, 0, 0),
+    MissionStats::new(2, 1, 1, 0, 0, 0, 0, 0),
+    MissionStats::new(2, 1, 0, 0, 0, 1, 0, 0),
+    MissionStats::new(2, 0, 1, 1, 0, 1, 0, 0),
+    MissionStats::new(2, 0, 0, 0, 0, 2, 0, 0),
+    MissionStats::new(1, 1, 1, 0, 0, 2, 0, 0),
+    MissionStats::new(1, 1, 0, 0, 1, 0, 0, 0),
+    MissionStats::new(1, 1, 0, 0, 0, 3, 0, 0),
+    MissionStats::new(1, 0, 1, 1, 1, 0, 0, 0),
+    MissionStats::new(1, 0, 1, 1, 0, 3, 0, 0),
+    MissionStats::new(1, 0, 0, 1, 1, 1, 0, 0),
+    MissionStats::new(1, 0, 0, 1, 0, 4, 0, 0),
+    MissionStats::new(0, 1, 0, 0, 1, 2, 0, 0),
+    MissionStats::new(0, 1, 0, 0, 0, 5, 0, 0),
+    MissionStats::new(0, 0, 0, 1, 1, 3, 0, 0),
+    MissionStats::new(0, 0, 0, 1, 2, 0, 0, 0),
+    MissionStats::new(0, 0, 0, 1, 0, 6, 0, 0),
 ];
 
 pub struct HmC {
@@ -78,7 +78,7 @@ impl HmC {
         }
     }
 
-    fn load_stats(&self) -> Option<[u32; 8]> {
+    fn load_stats(&self) -> Option<MissionStats> {
         let mut stats = [0; 8];
 
         // Shots has no map dependent pointer
@@ -109,12 +109,12 @@ impl HmC {
                 stat.to_vec(),
             ))?;
         }
-        return Some(stats);
+        return Some(MissionStats::from_array(stats));
     }
 }
 
 impl Backend for HmC {
-    fn update(&mut self) -> Option<(&str, u32, Option<([u32; 8], bool)>)> {
+    fn update(&mut self) -> Option<GameData> {
         // Get map bytes and decode
         let map_bytes = match read_memory(BASE_ADDRESS + MAP_ADDRESS, self.pid, 5, MAP.to_vec()) {
             Ok(bytes) => bytes,
@@ -147,22 +147,20 @@ impl Backend for HmC {
                 let mut silent_assasin = false;
 
                 for combination in SA_COMBINATIONS {
-                    if stats
-                        .iter()
-                        .zip(&combination)
-                        .filter(|&(stats, combination)| stats <= combination)
-                        .count()
-                        == 8
-                    {
+                    if stats <= combination {
                         silent_assasin = true;
                         break;
                     }
                 }
 
-                return Some((map_name, mission_time, Some((stats, silent_assasin))));
+                return Some(GameData::new(
+                    map_name.to_string(),
+                    mission_time,
+                    Some(crate::Rating::new(stats, silent_assasin)),
+                ));
             }
         }
-        return Some((map_name, 0, None));
+        return Some(GameData::new(map_name.to_string(), 0, None));
     }
 
     fn game_window(&self) -> Option<Window> {

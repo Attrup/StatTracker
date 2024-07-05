@@ -15,11 +15,12 @@ fn main() -> eframe::Result<(), eframe::Error> {
         eframe::NativeOptions {
             viewport: ViewportBuilder::default()
                 .with_inner_size([WIDTH, HEIGHT])
-                .with_min_inner_size([WIDTH, HEIGHT]),
+                .with_min_inner_size([WIDTH, HEIGHT])
+                .with_resizable(false),
             run_and_return: false,
             ..Default::default()
         },
-        // Initialize the GUI
+        // Launch the GUI
         Box::new(|cc| Ok(Box::new(App::new(cc)))),
     )
 }

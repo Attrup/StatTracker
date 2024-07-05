@@ -1,8 +1,7 @@
 use egui::Color32;
 
 /// Struct to easily store the ColorMaps for the Silent Assassin status
-#[derive(PartialEq, Clone)]
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(PartialEq, Clone, serde::Deserialize, serde::Serialize)]
 pub struct ColorMap {
     label: String,
     sa_true: Color32,
@@ -14,6 +13,7 @@ impl ColorMap {
     pub fn all_cmaps() -> Vec<Self> {
         vec![
             ColorMap::gr_cmap(),
+            ColorMap::dgr_cmap(),
             ColorMap::br_cmap(),
             ColorMap::bo_cmap(),
             ColorMap::bb_cmap(),
@@ -27,6 +27,15 @@ impl ColorMap {
             label: String::from("Green / Red"),
             sa_true: Color32::from_rgb(0, 160, 0),
             sa_false: Color32::RED,
+        }
+    }
+
+    /// Dark Green/Red colormap
+    fn dgr_cmap() -> Self {
+        ColorMap {
+            label: String::from("Darker Green / Red"),
+            sa_true: Color32::DARK_GREEN,
+            sa_false: Color32::DARK_RED,
         }
     }
 

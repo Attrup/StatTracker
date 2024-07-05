@@ -1,12 +1,13 @@
 use super::overlay::draw_overlay;
 use super::{colors::ColorMap, fonts, system_access::get_game};
-use crate::{Backend, Window};
+use crate::{Backend, GameData, MissionStats, Window};
 
 use egui::*;
 use std::time::Duration;
 use sysinfo::System;
 
 // Set the minimum refresh rate of the app in Hz
+// Note: It will increase if the cursor is moved around while the window is in focus
 const REFRESH_RATE: usize = 30;
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -43,8 +44,6 @@ enum State {
     Waiting,
 }
 
-/// Default implementation for the App struct to allow for easy creation
-/// of the struct and simplify the persistnce of the user settings
 impl Default for App {
     fn default() -> Self {
         Self {
@@ -60,7 +59,6 @@ impl Default for App {
     }
 }
 
-/// Egui / Eframe requires the App struct to be created in a single function
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         fonts::load_monospace_font(&cc.egui_ctx);
@@ -102,15 +100,7 @@ impl eframe::App for App {
             State::Running => {
                 match self.game.as_mut().unwrap().update() {
                     Some(game_data) => {
-                        display_game_data(
-                            ctx,
-                            game_data,
-                            &self.show_overlay,
-                            &self.overlay_size,
-                            &self.game_window,
-                            &mut self.state,
-                            &self.cmap,
-                        );
+                        display_game_data(ctx, game_data, &mut self.state, &self.cmap);
                     }
                     None => {
                         self.state = State::Waiting;
@@ -155,19 +145,11 @@ impl eframe::App for App {
 }
 
 /// Draw GUI for the application when a game is running
-fn display_game_data(
-    ctx: &egui::Context,
-    data: (&str, u32, Option<([u32; 8], bool)>),
-    show_overlay: &bool,
-    overlay_size: &u8,
-    game_window: &Option<Window>,
-    _app_state: &mut State,
-    cmap: &ColorMap,
-) {
+fn display_game_data(ctx: &egui::Context, data: GameData, _app_state: &mut State, cmap: &ColorMap) {
     egui::CentralPanel::default().show(ctx, |ui| {
         // Mission Title / Game Status
         ui.vertical_centered(|ui| {
-            ui.heading(egui::RichText::new(data.0).size(20.0));
+            ui.heading(egui::RichText::new(data.mission_name).size(20.0));
             ui.separator();
 
             // Mission Time
@@ -175,9 +157,9 @@ fn display_game_data(
             ui.label(
                 egui::RichText::new(format!(
                     "{:0>2}:{:0>2}.{:0>2}",
-                    data.1 / 3600,
-                    (data.1 / 60) % 60,
-                    ((100 / 60) * (data.1 % 60)) as usize,
+                    data.mission_time / 3600,
+                    (data.mission_time / 60) % 60,
+                    ((100 / 60) * (data.mission_time % 60)) as usize,
                 ))
                 .size(30.0)
                 .monospace(),
@@ -191,33 +173,23 @@ fn display_game_data(
                     .num_columns(2)
                     .spacing([20.0, 2.0])
                     .show(ui, |ui| {
-                        if let Some(stats) = data.2 {
-                            format_stats(ui, stats.0);
+                        if let Some(rating) = data.rating {
+                            format_stats(ui, rating.stats);
                         } else {
-                            format_stats(ui, [0; 8]);
+                            format_stats(ui, MissionStats::default());
                         }
                     });
             });
 
             // Mission Rating
             ui.add_space(6.0);
-            if let Some(stats) = data.2 {
+            if let Some(stats) = data.rating {
                 ui.label(
                     egui::RichText::new("SILENT ASSASSIN")
                         .size(25.0)
                         .monospace()
-                        .color(cmap.get_rating_color(stats.1)),
+                        .color(cmap.get_rating_color(stats.sa_rating)),
                 );
-
-                // Draw the overlay if enabled
-                if *show_overlay {
-                    draw_overlay(ctx, cmap, game_window, overlay_size, data.1, stats.1);
-                }
-            } else {
-                // Draw the overlay if enabled
-                if *show_overlay {
-                    draw_overlay(ctx, cmap, game_window, overlay_size, data.1, true);
-                }
             }
         });
     });
@@ -338,15 +310,15 @@ fn display_settings(
 }
 
 /// Display the current game stats in the defined order
-fn format_stats(ui: &mut Ui, stats: [u32; 8]) {
-    format_stat(ui, stats[0], "Shots Fired");
-    format_stat(ui, stats[1], "Close Encounters");
-    format_stat(ui, stats[2], "Headshots");
-    format_stat(ui, stats[3], "Alerts");
-    format_stat(ui, stats[4], "Enemies Killed");
-    format_stat(ui, stats[5], "Enemies Harmed");
-    format_stat(ui, stats[6], "Innocents Killed");
-    format_stat(ui, stats[7], "Innocents Harmed");
+fn format_stats(ui: &mut Ui, stats: MissionStats) {
+    format_stat(ui, stats.shots_fired, "Shots Fired");
+    format_stat(ui, stats.close_encounters, "Close Encounters");
+    format_stat(ui, stats.headshots, "Headshots");
+    format_stat(ui, stats.alerts, "Alerts");
+    format_stat(ui, stats.enemies_killed, "Enemies Killed");
+    format_stat(ui, stats.enemies_harmed, "Enemies Harmed");
+    format_stat(ui, stats.innocents_killed, "Innocents Killed");
+    format_stat(ui, stats.innocents_harmed, "Innocents Harmed");
 }
 
 /// Format the UI of a single stat
