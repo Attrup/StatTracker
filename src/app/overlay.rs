@@ -12,12 +12,12 @@ pub fn draw_overlay(
     cmap: &ColorMap,
     game_window: &Option<Window>,
     overlay_size: &u8,
-    timer: u32,
-    sa_status: bool,
+    timer: &u32,
+    sa_status: &bool,
 ) {
     // Create colored background frame depending on the current SA status
     let frame = egui::containers::Frame {
-        fill: cmap.get_rating_color(sa_status),
+        fill: cmap.get_rating_color(*sa_status),
         ..Default::default()
     };
 

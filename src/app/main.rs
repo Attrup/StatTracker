@@ -100,7 +100,19 @@ impl eframe::App for App {
             State::Running => {
                 match self.game.as_mut().unwrap().update() {
                     Some(game_data) => {
-                        display_game_data(ctx, game_data, &mut self.state, &self.cmap);
+                        display_game_data(ctx, &game_data, &mut self.state, &self.cmap);
+
+                        // Draw the overlay if enabled
+                        if self.show_overlay {
+                            draw_overlay(
+                                ctx,
+                                &self.cmap,
+                                &self.game_window,
+                                &self.overlay_size,
+                                &game_data.mission_time,
+                                &game_data.rating.map_or(false, |r| r.sa_rating),
+                            );
+                        }
                     }
                     None => {
                         self.state = State::Waiting;
@@ -132,8 +144,8 @@ impl eframe::App for App {
                         &self.cmap,
                         &self.game_window,
                         &self.overlay_size,
-                        0,
-                        true,
+                        &0,
+                        &true,
                     );
                 }
             }
@@ -145,11 +157,16 @@ impl eframe::App for App {
 }
 
 /// Draw GUI for the application when a game is running
-fn display_game_data(ctx: &egui::Context, data: GameData, _app_state: &mut State, cmap: &ColorMap) {
+fn display_game_data(
+    ctx: &egui::Context,
+    data: &GameData,
+    _app_state: &mut State,
+    cmap: &ColorMap,
+) {
     egui::CentralPanel::default().show(ctx, |ui| {
         // Mission Title / Game Status
         ui.vertical_centered(|ui| {
-            ui.heading(egui::RichText::new(data.mission_name).size(20.0));
+            ui.heading(egui::RichText::new(&data.mission_name).size(20.0));
             ui.separator();
 
             // Mission Time
