@@ -9,42 +9,85 @@ use sysinfo::System;
 // Set the minimum refresh rate of the app in Hz
 const REFRESH_RATE: usize = 30;
 
-pub struct GUI {
-    // Application data
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+/// Application struct that holds the GUI state and required data
+/// The user settings are made persistent using Serde to keep the settings
+/// consistent between application sessions.
+pub struct App {
+    // Application data (Not persistent)
+    #[serde(skip)]
     state: State,
+
+    #[serde(skip)]
     game: Option<Box<dyn Backend>>,
+
+    #[serde(skip)]
     game_window: Option<Window>,
+
+    #[serde(skip)]
     sys: System,
+
+    // User settings (Persistent)
     cmap: ColorMap,
     show_overlay: bool,
     overlay_size: u8,
+    theme: Visuals,
 }
 
+/// Enum to track the different states of the application
+/// Each state has a corresponding GUI layout that is displayed
 enum State {
     Running,
     Settings,
     Waiting,
 }
 
-impl GUI {
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        fonts::load_monospace_font(&cc.egui_ctx);
-
+/// Default implementation for the App struct to allow for easy creation
+/// of the struct and simplify the persistnce of the user settings
+impl Default for App {
+    fn default() -> Self {
         Self {
             state: State::Waiting,
             game: None,
             game_window: None,
             sys: System::new(),
             cmap: ColorMap::default(),
-            show_overlay: true,
+            show_overlay: false,
             overlay_size: 5,
+            theme: Visuals::dark(),
         }
     }
 }
 
-// Create the layout of the GUI for the application
-impl eframe::App for GUI {
-    /// Redraw the GUI
+/// Egui / Eframe requires the App struct to be created in a single function
+impl App {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        fonts::load_monospace_font(&cc.egui_ctx);
+
+        // Load the user settings from the previous session if they exist
+        if let Some(storage) = cc.storage {
+            let app_data: App = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+            // Theme is not saved by egui itself so we set it manually at launch
+            cc.egui_ctx.set_visuals(app_data.theme.clone());
+
+            return app_data;
+        }
+
+        // If no settings are found, use the default settings
+        Default::default()
+    }
+}
+
+/// Implementation of the eframe::App trait to allow for easy creation of the App
+/// and its GUI using the eframe crate.
+impl eframe::App for App {
+    /// Save the user settings to the storage on application close
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, eframe::APP_KEY, self);
+    }
+
+    /// Draw the GUI for the application
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // If game is running, update game stored game data, otherwise check if game
         // is running and update state accordingly
@@ -76,6 +119,7 @@ impl eframe::App for GUI {
                     }
                 }
 
+                // If game is running but window is not set, set the window
                 if self.game_window.is_none() {
                     self.game_window = self.game.as_ref().unwrap().game_window();
                 }
@@ -88,6 +132,7 @@ impl eframe::App for GUI {
                     &mut self.show_overlay,
                     &mut self.overlay_size,
                     &mut self.state,
+                    &mut self.theme,
                 );
 
                 // Draw the overlay if enabled
@@ -97,8 +142,8 @@ impl eframe::App for GUI {
                         &self.cmap,
                         &self.game_window,
                         &self.overlay_size,
-                        &0,
-                        &true,
+                        0,
+                        true,
                     );
                 }
             }
@@ -166,12 +211,12 @@ fn display_game_data(
 
                 // Draw the overlay if enabled
                 if *show_overlay {
-                    draw_overlay(ctx, cmap, game_window, overlay_size, &data.1, &stats.1);
+                    draw_overlay(ctx, cmap, game_window, overlay_size, data.1, stats.1);
                 }
             } else {
                 // Draw the overlay if enabled
                 if *show_overlay {
-                    draw_overlay(ctx, cmap, game_window, overlay_size, &data.1, &true);
+                    draw_overlay(ctx, cmap, game_window, overlay_size, data.1, true);
                 }
             }
         });
@@ -212,6 +257,7 @@ fn display_settings(
     show_overlay: &mut bool,
     overlay_size: &mut u8,
     app_state: &mut State,
+    theme: &mut Visuals,
 ) {
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.vertical_centered(|ui| {
@@ -227,7 +273,7 @@ fn display_settings(
             .show(ui, |ui| {
                 // Theme Toggle
                 ui.add(egui::Label::new("Theme"));
-                theme_toggle(ui, ctx);
+                theme_toggle(ui, ctx, theme);
                 ui.end_row();
 
                 // Color map selector
@@ -315,7 +361,7 @@ fn format_stat(ui: &mut Ui, value: u32, name: &str) {
 }
 
 /// Creates two buttons that allow the user to switch between light and dark mode
-fn theme_toggle(ui: &mut Ui, ctx: &egui::Context) {
+fn theme_toggle(ui: &mut Ui, ctx: &egui::Context, theme: &mut Visuals) {
     let colors = if !ui.visuals().dark_mode {
         (Color32::LIGHT_BLUE, Color32::TRANSPARENT)
     } else {
@@ -323,18 +369,22 @@ fn theme_toggle(ui: &mut Ui, ctx: &egui::Context) {
     };
 
     ui.horizontal(|ui| {
+        // Set the theme to light mode
         if ui
             .add(Button::new(egui::RichText::new("Light")).fill(colors.0))
             .clicked()
         {
-            ctx.set_visuals(Visuals::light())
+            ctx.set_visuals(Visuals::light());
+            *theme = Visuals::light();
         };
 
+        // Set the theme to dark mode
         if ui
             .add(Button::new(egui::RichText::new("Dark")).fill(colors.1))
             .clicked()
         {
-            ctx.set_visuals(Visuals::dark())
+            ctx.set_visuals(Visuals::dark());
+            *theme = Visuals::dark();
         };
     });
 }

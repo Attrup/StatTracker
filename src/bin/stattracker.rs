@@ -1,7 +1,7 @@
 // #![windows_subsystem = "windows"] // Removes console when running on Windows
 
 use eframe::egui::ViewportBuilder;
-use stattracker::app::main::GUI;
+use stattracker::app::main::App;
 
 // Define initial window size
 const WIDTH: f32 = 270.0;
@@ -20,6 +20,6 @@ fn main() -> eframe::Result<(), eframe::Error> {
             ..Default::default()
         },
         // Initialize the GUI
-        Box::new(|cc| Box::new(GUI::new(cc))),
+        Box::new(|cc| Ok(Box::new(App::new(cc)))),
     )
 }

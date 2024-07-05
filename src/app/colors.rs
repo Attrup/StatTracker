@@ -2,6 +2,7 @@ use egui::Color32;
 
 /// Struct to easily store the ColorMaps for the Silent Assassin status
 #[derive(PartialEq, Clone)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct ColorMap {
     label: String,
     sa_true: Color32,

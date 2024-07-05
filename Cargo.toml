@@ -15,15 +15,15 @@ path = "src/bin/stattracker.rs"
 read-process-memory = "0.1.6"
 sysinfo = "0.30.12"
 windows-sys = { version = "0.52.0", features = [
-    "Win32",
     "Win32_Foundation",
-    "Win32_UI",
     "Win32_UI_WindowsAndMessaging",
 ] }
+serde = { version = "1.0.203", features = ["derive"] }
 
 # Egui and its dependencies
-egui = { version = "0.27.2", features = ["persistence"] }
-eframe = { version = "0.27.2", default-features = false, features = [
+egui = "0.28.1"
+eframe = { version = "0.28.1", default-features = false, features = [
     "default_fonts",
     "glow",
+    "persistence",
 ] }
