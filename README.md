@@ -1,17 +1,19 @@
 # Hitman StatTracker
 <div align="center">
-  <a href="https://github.com/Attrup/StatTracker/releases">Download latest release</a>
-</div>
+  <a href="https://github.com/Attrup/StatTracker/releases">Download Latest Release</a>
+</div>  
 
-Hitman StatTracker is a statistics tracker for the classic Hitman games, Hitman 2 SA and Hitman Contracts, written in pure Rust using egui. The app tracks all eight of the critical statistics used by the game to calculate mission rating in real-time, and makes both stats and the Silent Assassin status easily visible to the user in a standalone window. In addition to the standalone window, *Hitman StatTracker* offers a resizeable game overlay that displays both the mission timer, and Silent Assasin status on top of the game. Multiple color options as well as both a light and dark theme are available to easily customize the app to suit your requirements. 
+---
+
+Hitman StatTracker is a statistics tracker for the classic Hitman games, Hitman 2: Silent Assassin and Hitman: Contracts. It is written in pure Rust using egui. The app tracks all eight critical statistics used by the game to calculate mission ratings in real-time, making both the stats and Silent Assassin status easily visible to the user in a standalone window. In addition to the standalone window, *Hitman StatTracker* offers a resizable game overlay that displays both the mission timer and Silent Assassin status on top of the game. Multiple color options, as well as both light and dark themes, are available to easily customize the app to suit your requirements.
 
 <div align="center">
   <img src="media/ingame.gif">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="media/tracker.gif" width="250">
 </div>
 
 
-## User guide
-To use the StatTracker have the app running alongide any of the supported games. The app will automatically detect compatible games and read and display the appropriate statistics. If no supported games are running, the app will simply show a waiting screen, until a compatible game is detected. To enable the overlay or change other user settings, simply enter the settings menu by **clicking on the mission timer** or pressing the settings button on the waiting screen.
+## User Guide
+To use the StatTracker, have the app running alongside any of the supported games. The app will automatically detect compatible games and read and display the appropriate statistics. If no supported games are running, the app will simply show a waiting screen until a compatible game is detected. To enable the overlay or change other user settings, simply enter the settings menu by **clicking on the mission timer** or pressing the settings button on the waiting screen.
 
 <div align="center">
   <img src="media/settings.gif" width="250">
@@ -24,10 +26,10 @@ Full credit for the original idea of this app goes to [nvillemin](https://github
 ### Simple
 A precompiled executable is available on the releases page or through the link in the top of the readme.
 
-### Build from source
-The process of building the application from source is very straight forward due to the simplicity of managing dependencies provided by *Cargo*, the package manager for Rust. Note that the app as Windows specific dependencies and will therefore only build and run on Windows.
+### Build From Source
+The process of building the application from source is very straightforward due to the simplicity of managing dependencies provided by *Cargo*, the package manager for Rust. Note that the app has Windows-specific dependencies and will therefore only build and run on Windows.
 
-#### Required build tools:
+#### Required Build Tools:
 - Rust compiler (At least version 1.76)
 - Cargo package manager
 
@@ -40,4 +42,4 @@ Both can be obtained simply by installing Rust using *rustup* from the Rust-lang
 `cargo build --release`
 - Wait a couple of minutes for the dependencies to install and the app to build
 - Once finished, the executable can be found at:  
-`target\release\StatTracker.exe`
+`target/release/StatTracker.exe`
