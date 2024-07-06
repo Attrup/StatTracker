@@ -1,4 +1,5 @@
 #![windows_subsystem = "windows"] // Removes console when running on Windows
+#![allow(non_snake_case)] // Allow executable name to be in Pascal Case
 
 use eframe::egui::{IconData, ViewportBuilder};
 use stattracker::app::main::App;

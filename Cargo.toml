@@ -8,7 +8,7 @@ build = "src/build.rs"
 
 # Define the information on the binaries
 [[bin]]
-name = "stattracker"
+name = "StatTracker"
 path = "src/bin/stattracker.rs"
 
 [dependencies]

@@ -8,7 +8,8 @@ use sysinfo::System;
 
 // Set the minimum refresh rate of the app in Hz
 // Note: Refresh rate will increase if the cursor is moved around while the window is in focus
-const REFRESH_RATE: usize = 30;
+const RUNNING_REFRESH_RATE: usize = 30;
+const WAITING_REFRESH_RATE: usize = 1;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
@@ -96,6 +97,11 @@ impl eframe::App for App {
                     self.game = Some(game);
                     self.state = State::Running;
                 }
+
+                // Force redraw of the GUI
+                ctx.request_repaint_after(Duration::from_millis(
+                    (1000 / WAITING_REFRESH_RATE) as u64,
+                ))
             }
             State::Running => {
                 match self.game.as_mut().unwrap().update() {
@@ -110,7 +116,7 @@ impl eframe::App for App {
                                 &self.game_window,
                                 &self.overlay_size,
                                 &game_data.mission_time,
-                                &game_data.rating.map_or(false, |r| r.sa_rating),
+                                &game_data.rating.map_or(true, |r| r.sa_rating),
                             );
                         }
                     }
@@ -125,6 +131,11 @@ impl eframe::App for App {
                 if self.game_window.is_none() {
                     self.game_window = self.game.as_ref().unwrap().game_window();
                 }
+
+                // Force redraw of the GUI
+                ctx.request_repaint_after(Duration::from_millis(
+                    (1000 / RUNNING_REFRESH_RATE) as u64,
+                ))
             }
 
             State::Settings => {
@@ -150,19 +161,11 @@ impl eframe::App for App {
                 }
             }
         }
-
-        // Force refresh of the app at the defined rate
-        ctx.request_repaint_after(Duration::from_millis((1000 / REFRESH_RATE) as u64))
     }
 }
 
 /// Draw GUI for the application when a game is running
-fn display_game_data(
-    ctx: &egui::Context,
-    data: &GameData,
-    _app_state: &mut State,
-    cmap: &ColorMap,
-) {
+fn display_game_data(ctx: &egui::Context, data: &GameData, app_state: &mut State, cmap: &ColorMap) {
     egui::CentralPanel::default().show(ctx, |ui| {
         // Mission Title / Game Status
         ui.vertical_centered(|ui| {
@@ -170,20 +173,25 @@ fn display_game_data(
             ui.separator();
 
             // Mission Time
-            ui.add_space(4.0);
-            ui.label(
-                egui::RichText::new(format!(
-                    "{:0>2}:{:0>2}.{:0>2}",
-                    data.mission_time / 3600,
-                    (data.mission_time / 60) % 60,
-                    ((100 / 60) * (data.mission_time % 60)) as usize,
-                ))
-                .size(30.0)
-                .monospace(),
-            );
+            if ui
+                .add(
+                    Button::new(
+                        egui::RichText::new(format!(
+                            "{:0>2}:{:0>2}",
+                            data.mission_time / 3600,
+                            (data.mission_time / 60) % 60,
+                        ))
+                        .size(40.0)
+                        .monospace(),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                *app_state = State::Settings;
+            }
 
             // Mission Stats
-            ui.add_space(4.0);
             ui.horizontal(|ui| {
                 ui.add_space(20.0);
                 egui::Grid::new("Stats")
@@ -199,7 +207,7 @@ fn display_game_data(
             });
 
             // Mission Rating
-            ui.add_space(6.0);
+            ui.add_space(4.0);
             if let Some(stats) = data.rating {
                 ui.label(
                     egui::RichText::new("SILENT ASSASSIN")
