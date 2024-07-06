@@ -6,7 +6,7 @@
 Hitman StatTracker is a statistics tracker for the classic Hitman games, Hitman 2 SA and Hitman Contracts, written in pure Rust using egui. The app tracks all eight of the critical statistics used by the game to calculate mission rating in real-time, and makes both stats and the Silent Assassin status easily visible to the user in a standalone window. In addition to the standalone window, *Hitman StatTracker* offers a resizeable game overlay that displays both the mission timer, and Silent Assasin status on top of the game. Multiple color options as well as both a light and dark theme are available to easily customize the app to suit your requirements. 
 
 <div align="center">
-  <img src="media/ingame.gif">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="media/tracker.gif">
+  <img src="media/ingame.gif">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="media/tracker.gif" width="250">
 </div>
 
 
