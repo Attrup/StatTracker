@@ -33,7 +33,7 @@ impl Rating {
         Rating { stats, sa_rating }
     }
 }
-#[derive(PartialEq, PartialOrd, Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct MissionStats {
     pub shots_fired: u32,
     pub close_encounters: u32,
@@ -121,6 +121,7 @@ pub mod app {
 
     /// Backends for each supported game
     pub mod backends {
+        pub mod backend_helpers;
         pub mod hm2;
         pub mod hmc;
     }

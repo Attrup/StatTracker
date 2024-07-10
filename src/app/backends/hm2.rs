@@ -1,3 +1,4 @@
+use super::backend_helpers::sa_compare;
 use crate::app::{memory::*, system_access::get_process_window};
 use crate::{Backend, GameData, MissionStats, Rating, Window};
 use std::collections::HashMap;
@@ -27,7 +28,7 @@ const MAP_OFFSETS: [usize; 20] = [
 ];
 
 /// Valid silent assassin combinations
-const SA_COMBINATIONS: [MissionStats; 27] = [
+pub const SA_COMBINATIONS: [MissionStats; 27] = [
     MissionStats::new(0, 1, 0, 0, 1, 2, 0, 0),
     MissionStats::new(0, 1, 0, 0, 0, 5, 0, 0),
     MissionStats::new(0, 1, 0, 0, 0, 2, 0, 1),
@@ -239,7 +240,7 @@ impl Backend for Hm2 {
                         let mut silent_assasin = false;
 
                         for combination in SA_COMBINATIONS {
-                            if stats <= combination {
+                            if sa_compare(stats, combination) {
                                 silent_assasin = true;
                                 break;
                             }

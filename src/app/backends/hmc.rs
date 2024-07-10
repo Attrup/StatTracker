@@ -1,3 +1,4 @@
+use super::backend_helpers::sa_compare;
 use crate::app::{memory::*, system_access::get_process_window};
 use crate::{Backend, GameData, MissionStats, Window};
 use std::collections::HashMap;
@@ -147,7 +148,7 @@ impl Backend for HmC {
                 let mut silent_assasin = false;
 
                 for combination in SA_COMBINATIONS {
-                    if stats <= combination {
+                    if sa_compare(stats, combination) {
                         silent_assasin = true;
                         break;
                     }

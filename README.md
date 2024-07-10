@@ -11,7 +11,7 @@ Hitman StatTracker is a statistics tracker for the classic Hitman games, Hitman 
 
 
 ## User guide
-To use the StatTracker have the app running alongide any of the supported games. The app will automatically detect compatible games and read and display the appropriate statistics. If no supported games are running, the app will simply show a waiting screen, until a compatible game is detected. To enable the overlay or change other user settings, simply enter the settings menu by **clicking on the mission timer** or pressing the settings button on the waiting screen.
+To use the StatTracker have the app running alongside any of the supported games. The app will automatically detect compatible games and read and display the appropriate statistics. If no supported games are running, the app will simply show a waiting screen, until a compatible game is detected. To enable the overlay or change other user settings, simply enter the settings menu by **clicking on the mission timer** or pressing the settings button on the waiting screen.
 
 <div align="center">
   <img src="media/settings.gif" width="250">
